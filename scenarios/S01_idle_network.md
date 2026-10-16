@@ -21,13 +21,14 @@
                                br-lan
               +-------------------+--------------------+
               |                                        |
-       SSID "SmartHome-User"                    SSID "SmartHome-IoT"
-       ○ PC01     .10  chờ, không mở app        ○ CAM01 .30   ○ IOT01 .40
-       ○ PC02     .11  chờ, không mở app        ○ CAM02 .31   ○ IOT02 .41
-       ○ PHONE01  .15  khóa màn hình            ○ CAM03 .32   ○ IOT03 .42
-       ○ PHONE02  .16  khóa màn hình
-       [Lớn: + PC03 .12, PC04 .13, PC05 .14, PHONE03–05 .17–.19]
+       Người dùng                               Camera, IoT
+       ○ LAPTOP01 .10  chờ, không mở app        ○ CAM01 .30   ○ IOT01 .40
+       ○ LAPTOP02 .11  chờ, không mở app        ○ CAM02 .31   ○ IOT02 .41
+       ○ PHONE01  .14  khóa màn hình            ○ CAM03 .32   ○ IOT03 .42
+       ○ PHONE02  .15  khóa màn hình
+       [Lớn: + LAPTOP03 .12, LAPTOP04 .13, PHONE03–06 .16–.19]
 
+Tất cả thiết bị Wi-Fi dùng chung SSID "SmartHome".
 Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 ```
 
@@ -37,12 +38,12 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 |---|---|---|---|---|---|
 | ROUTER | Router OpenWrt | 192.168.10.1 | — | Cả hai | Gateway, DHCP/DNS/NTP, broker, capture `br-lan` |
 | CAPTURE-SERVER | Server capture | 192.168.10.60 | LAN port | Cả hai | Nhận PCAP qua SSH, không dùng cho việc khác |
-| PC01–PC02 | PC/Laptop | 192.168.10.10–11 | SmartHome-User | Cả hai | Bật, đăng nhập, đóng toàn bộ trình duyệt/app; laptop cắm sạc, không cho sleep |
-| PC03–PC05 | PC/Laptop | 192.168.10.12–14 | SmartHome-User | Lớn | Như PC01 |
-| PHONE01–PHONE02 | Smartphone | 192.168.10.15–16 | SmartHome-User | Cả hai | Khóa màn hình, giữ Wi-Fi, app chạy nền như thường ngày |
-| PHONE03–PHONE05 | Smartphone | 192.168.10.17–19 | SmartHome-User | Lớn | Như PHONE01 |
-| CAM01–CAM03 | IP camera | 192.168.10.30–32 | SmartHome-IoT | Cả hai | Bật, **không có ai xem** |
-| IOT01–IOT03 | IoT MQTT | 192.168.10.40–42 | SmartHome-IoT | Cả hai | Chạy S08 bình thường |
+| LAPTOP01–LAPTOP02 | Laptop | 192.168.10.10–11 | SmartHome | Cả hai | Bật, đăng nhập, đóng toàn bộ trình duyệt/app; laptop cắm sạc, không cho sleep |
+| LAPTOP03–LAPTOP04 | Laptop | 192.168.10.12–13 | SmartHome | Lớn | Như LAPTOP01 |
+| PHONE01–PHONE02 | Smartphone | 192.168.10.14–15 | SmartHome | Cả hai | Khóa màn hình, giữ Wi-Fi, app chạy nền như thường ngày |
+| PHONE03–PHONE06 | Smartphone | 192.168.10.16–19 | SmartHome | Lớn | Như PHONE01 |
+| CAM01–CAM03 | IP camera | 192.168.10.30–32 | SmartHome | Cả hai | Bật, **không có ai xem** |
+| IOT01–IOT03 | IoT MQTT | 192.168.10.40–42 | SmartHome | Cả hai | Chạy S08 bình thường |
 
 ## 3. Thời gian thu
 
@@ -62,18 +63,18 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 
 ### 4.1. Setup hạ tầng
 - [ ] Flow offloading đang tắt: `uci get firewall.@defaults[0].flow_offloading` và `flow_offloading_hw` đều trả về `0`.
-- [ ] Đồng hồ ROUTER, CAPTURE-SERVER, PC/laptop lệch ≤ 1 giây.
+- [ ] Đồng hồ ROUTER, CAPTURE-SERVER, laptop lệch ≤ 1 giây.
 - [ ] Mosquitto đang chạy trên ROUTER: `/etc/init.d/mosquitto status`.
 - [ ] CAPTURE-SERVER còn trống ≥ 1 GB.
 - [ ] Chỉ CAPTURE-SERVER được SSH vào router trong suốt phiên (SSH từ máy khác sẽ lọt vào PCAP).
 
 ### 4.2. Setup device
 - [ ] Tất cả thiết bị của cấu hình đã kết nối đúng SSID và nhận đúng IP (kiểm tra `Network → DHCP Leases` trên LuCI).
-- [ ] PC/laptop: đóng trình duyệt, app chat, app cloud **để nguyên trạng thái mặc định** (không tắt dịch vụ nền của hệ điều hành).
-- [ ] PC/Laptop: tắt chế độ sleep trong thời gian thu.
+- [ ] laptop: đóng trình duyệt, app chat, app cloud **để nguyên trạng thái mặc định** (không tắt dịch vụ nền của hệ điều hành).
+- [ ] Laptop: tắt chế độ sleep trong thời gian thu.
 - [ ] Smartphone: không bật chế độ máy bay/tiết kiệm dữ liệu; khóa màn hình trước khi bắt đầu.
 - [ ] Camera: đóng toàn bộ app/tab xem camera trên mọi thiết bị.
-- [ ] Thông báo người trong nhà không dùng mạng trong 30 phút.
+- [ ] Thông báo thành viên lab không thao tác thiết bị trong danh sách và không kết nối thiết bị khác vào SSID SmartHome trong 30 phút.
 
 ### 4.3. Thực hiện
 - [ ] Tạo `session_id` mới, bắt đầu capture (Cách A hoặc B, mục 5.2 tài liệu gốc), ghi `start_time`.

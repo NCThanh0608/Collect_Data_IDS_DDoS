@@ -23,15 +23,16 @@
                                br-lan
               +-------------------+--------------------+
               |                                        |
-       SSID "SmartHome-User"  (dashboard)       SSID "SmartHome-IoT"
-       ● PHONE01  .15  app MQTT dashboard       ● IOT01 .40  nhận lệnh đổi chu kỳ
-       ● PC02     .11  MQTT Explorer / web UI   ● IOT02 .41  nhận lệnh arm/disarm
-       ○ PC01     .10  chờ                      ● IOT03 .42  nhận lệnh on/off
-       ○ PHONE02  .16  chờ                      ○ CAM01–CAM03 .30–.32
-       [Lớn: ● PHONE02 .16 dashboard thứ hai; còn lại ○]
+       Người dùng  (dashboard)                  Camera, IoT
+       ● PHONE01  .14  app MQTT dashboard       ● IOT01 .40  nhận lệnh đổi chu kỳ
+       ● LAPTOP02 .11  MQTT Explorer / web UI   ● IOT02 .41  nhận lệnh arm/disarm
+       ○ LAPTOP01 .10  chờ                      ● IOT03 .42  nhận lệnh on/off
+       ○ PHONE02  .15  chờ                      ○ CAM01–CAM03 .30–.32
+       [Lớn: ● PHONE02 .15 dashboard thứ hai; còn lại ○]
 
 Luồng lệnh:  Dashboard --PUBLISH cmd--> Broker --PUBLISH cmd--> IoT
              IoT --PUBLISH ack/state--> Broker --PUBLISH--> Dashboard
+Tất cả thiết bị Wi-Fi dùng chung SSID "SmartHome".
 Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 ```
 
@@ -41,13 +42,13 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 |---|---|---|---|---|---|
 | ROUTER | Broker Mosquitto | 192.168.10.1 | — | Cả hai | Chuyển tiếp lệnh/trạng thái, capture |
 | CAPTURE-SERVER | Server capture | 192.168.10.60 | LAN port | Cả hai | Capture |
-| PHONE01 | Smartphone | 192.168.10.15 | SmartHome-User | Cả hai | App dashboard MQTT (ví dụ IoT MQTT Panel), client ID `dashboard-phone01` |
-| PC02 | PC/Laptop | 192.168.10.11 | SmartHome-User | Cả hai | MQTT Explorer hoặc dashboard web, client ID `dashboard-pc02` |
-| PHONE02 | Smartphone | 192.168.10.16 | SmartHome-User | Lớn | Dashboard thứ hai, client ID `dashboard-phone02` |
-| IOT01 | Cảm biến môi trường | 192.168.10.40 | SmartHome-IoT | Cả hai | Nhận lệnh đổi chu kỳ publish / yêu cầu đọc ngay |
-| IOT02 | Cảm biến cửa / chuyển động | 192.168.10.41 | SmartHome-IoT | Cả hai | Nhận lệnh arm/disarm |
-| IOT03 | Ổ cắm / công tắc | 192.168.10.42 | SmartHome-IoT | Cả hai | Nhận lệnh on/off, gửi `ack` và `state` |
-| CAM01–CAM03 | IP camera | 192.168.10.30–32 | SmartHome-IoT | Cả hai | Nền |
+| PHONE01 | Smartphone | 192.168.10.14 | SmartHome | Cả hai | App dashboard MQTT (ví dụ IoT MQTT Panel), client ID `dashboard-phone01` |
+| LAPTOP02 | Laptop | 192.168.10.11 | SmartHome | Cả hai | MQTT Explorer hoặc dashboard web, client ID `dashboard-laptop02` |
+| PHONE02 | Smartphone | 192.168.10.15 | SmartHome | Lớn | Dashboard thứ hai, client ID `dashboard-phone02` |
+| IOT01 | Cảm biến môi trường | 192.168.10.40 | SmartHome | Cả hai | Nhận lệnh đổi chu kỳ publish / yêu cầu đọc ngay |
+| IOT02 | Cảm biến cửa / chuyển động | 192.168.10.41 | SmartHome | Cả hai | Nhận lệnh arm/disarm |
+| IOT03 | Ổ cắm / công tắc | 192.168.10.42 | SmartHome | Cả hai | Nhận lệnh on/off, gửi `ack` và `state` |
+| CAM01–CAM03 | IP camera | 192.168.10.30–32 | SmartHome | Cả hai | Nền |
 
 **Lệnh mẫu** (topic `smarthome/<device_id>/cmd`, QoS 1):
 
@@ -71,8 +72,8 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 | 00–02 | Bắt đầu capture, dashboard chưa mở |
 | 02–05 | PHONE01 mở dashboard (CONNECT, SUBSCRIBE), xem trạng thái, không gửi lệnh |
 | 05–10 | PHONE01 bật/tắt IOT03 4–6 lần; gửi `read_now` cho IOT01 2 lần |
-| 10–15 | PC02 mở dashboard, arm/disarm IOT02, bật/tắt IOT03 (Lớn: PHONE02 cùng theo dõi) |
-| 15–18 | PHONE01 và PC02 xen kẽ gửi lệnh; PHONE01 chuyển app xuống nền rồi mở lại |
+| 10–15 | LAPTOP02 mở dashboard, arm/disarm IOT02, bật/tắt IOT03 (Lớn: PHONE02 cùng theo dõi) |
+| 15–18 | PHONE01 và LAPTOP02 xen kẽ gửi lệnh; PHONE01 chuyển app xuống nền rồi mở lại |
 | 18–20 | Đóng mọi dashboard (DISCONNECT), dừng capture |
 
 ## 4. Checklist công việc
@@ -80,10 +81,10 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 ### 4.1. Setup hạ tầng
 - [ ] Flow offloading tắt; đồng hồ các máy lệch ≤ 1 giây.
 - [ ] Mosquitto chạy, S08 hoạt động; đã tạo tài khoản cho client dashboard.
-- [ ] Firewall cho phép SmartHome-User → `192.168.10.1:1883`.
+- [ ] Firewall cho phép zone LAN → `192.168.10.1:1883`.
 
 ### 4.2. Setup device
-- [ ] Cài app dashboard trên PHONE01/PHONE02, MQTT Explorer trên PC02; cấu hình broker, client ID, tài khoản.
+- [ ] Cài app dashboard trên PHONE01/PHONE02, MQTT Explorer trên LAPTOP02; cấu hình broker, client ID, tài khoản.
 - [ ] Tạo sẵn nút/widget cho từng lệnh trong bảng lệnh mẫu.
 - [ ] Xác nhận firmware IOT01–IOT03 xử lý được lệnh và gửi phản hồi (thử trước phiên, **không** trong lúc capture).
 - [ ] Đóng app dashboard trước khi bắt đầu.
@@ -105,7 +106,7 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 |---|---|---|---|
 | 1 | PCAP ≥ 18 phút, không rỗng, drop < 0,1% | `capinfos`, số liệu tcpdump | [ ] |
 | 2 | Không có traffic SSH của CAPTURE-SERVER | `tcp.port == 22` → 0 gói | [ ] |
-| 3 | Dashboard CONNECT và SUBSCRIBE từ PHONE01, PC02 (Lớn: PHONE02) | `mqtt.msgtype == 1 \|\| mqtt.msgtype == 8` | [ ] |
+| 3 | Dashboard CONNECT và SUBSCRIBE từ PHONE01, LAPTOP02 (Lớn: PHONE02) | `mqtt.msgtype == 1 \|\| mqtt.msgtype == 8` | [ ] |
 | 4 | Số PUBLISH lệnh khớp nhật ký lệnh | `mqtt.topic contains "/cmd"` | [ ] |
 | 5 | Mỗi lệnh IOT03 có `ack`/`state` trong ≤ 2 giây | `mqtt.topic contains "iot03"` → so sánh thời gian | [ ] |
 | 6 | Lệnh QoS 1 có PUBACK | `mqtt.msgtype == 4` | [ ] |

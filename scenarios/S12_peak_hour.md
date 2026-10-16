@@ -21,18 +21,19 @@
                                br-lan
               +-------------------+--------------------+
               |                                        |
-       SSID "SmartHome-User"                    SSID "SmartHome-IoT"
-       ● PC01     .10  YouTube 1080p            ● CAM01 .30  live view
-       ● PC02     .11  họp video                ● CAM02 .31  snapshot
-       ● PC03     .12  download lớn             ● CAM03 .32  2 viewer
-       ● PC04     .13  phim 1080p               ● IOT01 .40  telemetry 5 s
-       ● PC05     .14  upload cloud             ● IOT02 .41  sự kiện
-       ● PHONE01  .15  xem camera               ● IOT03 .42  nhận lệnh
-       ● PHONE02  .16  TikTok
-       ● PHONE03  .17  backup ảnh
-       ● PHONE04  .18  gọi video Zalo
-       ● PHONE05  .19  dashboard + web
+       Người dùng                               Camera, IoT
+       ● LAPTOP01 .10  YouTube 1080p            ● CAM01 .30  live view
+       ● LAPTOP02 .11  họp video                ● CAM02 .31  snapshot
+       ● LAPTOP03 .12  download lớn             ● CAM03 .32  2 viewer
+       ● LAPTOP04 .13  phim 1080p               ● IOT01 .40  telemetry 5 s
+       ● PHONE01  .14  xem camera               ● IOT02 .41  sự kiện
+       ● PHONE02  .15  TikTok                   ● IOT03 .42  nhận lệnh
+       ● PHONE03  .16  backup ảnh
+       ● PHONE04  .17  gọi video Zalo
+       ● PHONE05  .18  dashboard + web
+       ● PHONE06  .19  upload video cloud
 
+Tất cả thiết bị Wi-Fi dùng chung SSID "SmartHome".
 Chú thích: ● hoạt động chủ động
 ```
 
@@ -40,16 +41,16 @@ Chú thích: ● hoạt động chủ động
 
 | Device ID | Loại | IP | Hoạt động trong kịch bản | Nhóm tải |
 |---|---|---|---|---|
-| PC01 | PC/Laptop | 192.168.10.10 | YouTube 1080p liên tục | Video |
-| PC02 | PC/Laptop | 192.168.10.11 | Họp video Meet/Zoom, share màn hình 5 phút | Gọi video |
-| PC03 | PC/Laptop | 192.168.10.12 | Download file 200 MB × 2 (tuần tự, qua trình duyệt) | Truyền file |
-| PC04 | PC/Laptop | 192.168.10.13 | Phim trực tuyến 1080p | Video |
-| PC05 | PC/Laptop | 192.168.10.14 | Upload 200 MB lên cloud + sync thư mục | Truyền file |
-| PHONE01 | Smartphone | 192.168.10.15 | Live view CAM01, đổi sang CAM03 | Camera |
-| PHONE02 | Smartphone | 192.168.10.16 | TikTok/Reels liên tục | Video |
-| PHONE03 | Smartphone | 192.168.10.17 | Backup 100–200 ảnh | Truyền file |
-| PHONE04 | Smartphone | 192.168.10.18 | Gọi video Zalo/Messenger (người nghe ở ngoài) | Gọi video |
-| PHONE05 | Smartphone | 192.168.10.19 | Dashboard MQTT, điều khiển IOT03; duyệt web | Điều khiển + web |
+| LAPTOP01 | Laptop | 192.168.10.10 | YouTube 1080p liên tục | Video |
+| LAPTOP02 | Laptop | 192.168.10.11 | Họp video Meet/Zoom, share màn hình 5 phút | Gọi video |
+| LAPTOP03 | Laptop | 192.168.10.12 | Download file 200 MB × 2 (tuần tự, qua trình duyệt) | Truyền file |
+| LAPTOP04 | Laptop | 192.168.10.13 | Phim trực tuyến 1080p | Video |
+| PHONE01 | Smartphone | 192.168.10.14 | Live view CAM01, đổi sang CAM03 | Camera |
+| PHONE02 | Smartphone | 192.168.10.15 | TikTok/Reels liên tục | Video |
+| PHONE03 | Smartphone | 192.168.10.16 | Backup 100–200 ảnh | Truyền file |
+| PHONE04 | Smartphone | 192.168.10.17 | Gọi video Zalo/Messenger (người nghe ở ngoài) | Gọi video |
+| PHONE05 | Smartphone | 192.168.10.18 | Dashboard MQTT, điều khiển IOT03; duyệt web | Điều khiển + web |
+| PHONE06 | Smartphone | 192.168.10.19 | Upload video ~200 MB lên Google Drive/YouTube | Truyền file |
 | CAM01–CAM03 | IP camera | 192.168.10.30–32 | Có viewer trong phần lớn phiên | Camera |
 | IOT01 | IoT MQTT | 192.168.10.40 | Telemetry chu kỳ **5 giây** (mức cao nhất của S08) | MQTT |
 | IOT02–IOT03 | IoT MQTT | 192.168.10.41–42 | Sự kiện / nhận lệnh | MQTT |
@@ -62,16 +63,16 @@ Chú thích: ● hoạt động chủ động
 | Hạng mục | Giá trị |
 |---|---|
 | Thời lượng một lần thu | 30 phút |
-| Số lần thu | 2–3 lần trong khung 07:00–18:00, ưu tiên cuối tuần hoặc ngày nghỉ khi đủ người dùng |
+| Số lần thu | 2–3 lần trong khung 07:00–18:00, xếp lịch trước khi đủ 10 người vận hành thiết bị |
 | Dung lượng PCAP ước tính | 10–25 GB / lần |
 | Cách lưu | Cách B, tách file mỗi 10 phút (`-G 600`) |
 
 | Mốc (phút) | Hoạt động |
 |---|---|
 | 00–02 | Bắt đầu capture, mọi thiết bị đã mở sẵn app nhưng chưa phát |
-| 02–05 | Tăng dần: PC01, PC04, PHONE02 bắt đầu video |
-| 05–10 | PC02 vào họp; PHONE04 gọi video; PHONE01 xem CAM01 |
-| 10–22 | **Đỉnh tải:** PC03 download, PC05 upload, PHONE03 backup; mọi luồng video/gọi tiếp tục; PHONE05 gửi lệnh IOT03 mỗi 1–2 phút; PHONE01 + PC02 xem CAM03 |
+| 02–05 | Tăng dần: LAPTOP01, LAPTOP04, PHONE02 bắt đầu video |
+| 05–10 | LAPTOP02 vào họp; PHONE04 gọi video; PHONE01 xem CAM01 |
+| 10–22 | **Đỉnh tải:** LAPTOP03 download, PHONE06 upload, PHONE03 backup; mọi luồng video/gọi tiếp tục; PHONE05 gửi lệnh IOT03 mỗi 1–2 phút; PHONE01 + LAPTOP02 xem CAM03 |
 | 22–27 | Giảm dần: kết thúc họp, gọi; truyền file kết thúc tự nhiên |
 | 27–30 | Dừng video, dừng capture |
 
@@ -87,7 +88,7 @@ Chú thích: ● hoạt động chủ động
 
 ### 4.2. Setup device
 - [ ] Tất cả 16 client đã kết nối đúng SSID/IP ≥ 5 phút trước phiên.
-- [ ] Chuẩn bị nội dung: video, phim, file 200 MB, album ảnh, phòng họp, người nghe ngoài mạng nhà.
+- [ ] Chuẩn bị nội dung: video, phim, file 200 MB, album ảnh, phòng họp, người nghe ngoài mạng SmartHome.
 - [ ] Dashboard MQTT trên PHONE05 đã cấu hình sẵn.
 - [ ] Phân công người dùng, phát timeline; thống nhất tín hiệu bắt đầu đỉnh tải (phút 10).
 - [ ] Smartphone tắt dữ liệu di động; không dùng VPN.

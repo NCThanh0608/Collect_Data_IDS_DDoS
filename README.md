@@ -1,10 +1,10 @@
 # Smart Home Normal Traffic Collection
 
-Dự án thu thập **lưu lượng mạng bình thường (normal traffic)** của một mạng Smart Home. Dữ liệu dùng làm **baseline** để xây dựng và đánh giá hệ thống phát hiện xâm nhập (IDS) dựa trên phát hiện bất thường.
+Dự án thu thập **lưu lượng mạng bình thường (normal traffic)** của một mạng Smart Home **mô phỏng trong phòng lab**. Dữ liệu dùng làm **baseline** để xây dựng và đánh giá hệ thống phát hiện xâm nhập (IDS) dựa trên phát hiện bất thường.
 
 ## Mục tiêu
 
-- Thu PCAP gốc của các hoạt động hằng ngày trong một ngôi nhà thông minh: duyệt web, xem video, gọi điện, truyền file, xem camera, điều khiển thiết bị IoT.
+- Thu PCAP gốc khi mô phỏng các hoạt động hằng ngày của một ngôi nhà thông minh, do thành viên lab đóng vai người dùng: duyệt web, xem video, gọi điện, truyền file, xem camera, điều khiển thiết bị IoT.
 - Bao phủ nhiều mức tải hợp lệ: nhàn rỗi, sử dụng ít, sử dụng vừa, giờ cao điểm.
 - Ghi metadata ở **cấp phiên thu**, để biết trong mỗi phiên có thiết bị nào kết nối và hoạt động nào diễn ra.
 
@@ -12,11 +12,12 @@ Dự án thu thập **lưu lượng mạng bình thường (normal traffic)** c�
 
 | Hạng mục | Phạm vi |
 |---|---|
+| Môi trường | Phòng lab mô phỏng Smart Home; thành viên lab vận hành thiết bị theo kịch bản |
 | Loại traffic | Chỉ traffic bình thường; **không** có tấn công |
 | Gán nhãn | **Không gán nhãn** packet, flow hay time window |
 | Khung giờ thu | Chỉ ban ngày, **07:00–18:00** |
 | Điểm thu | Router OpenWrt, interface `br-lan` |
-| Quy mô | 10–16 client: 4–10 PC/Laptop/Smartphone, 3 IP camera (HTTP/HTTPS), 3 thiết bị IoT (MQTT) |
+| Quy mô | 10–16 client: 4–10 Laptop/Smartphone, 3 IP camera (HTTP/HTTPS), 3 thiết bị IoT (MQTT) |
 
 ## Mô hình mạng
 
@@ -26,14 +27,13 @@ Dự án thu thập **lưu lượng mạng bình thường (normal traffic)** c�
           ROUTER OpenWrt 192.168.10.1  (DHCP/DNS, Mosquitto, tcpdump trên br-lan)
                              |
                           br-lan  <---- CAPTURE-SERVER 192.168.10.60 (SSH, lưu PCAP)
-              +--------------+--------------+
-              |                             |
-     SSID "SmartHome-User"          SSID "SmartHome-IoT"
-     PC01–PC05     .10–.14          CAM01–CAM03   .30–.32
-     PHONE01–05    .15–.19          IOT01–IOT03   .40–.42
+                             |
+               SSID "SmartHome" (chung cho mọi thiết bị Wi-Fi)
+     LAPTOP01–04   .10–.13          CAM01–CAM03   .30–.32
+     PHONE01–06    .14–.19          IOT01–IOT03   .40–.42
 ```
 
-Thiết bị người dùng và camera/IoT dùng hai SSID khác nhau nhưng cùng bridge vào `br-lan`. Nhờ vậy luồng giữa hai nhóm bắt buộc đi qua router và thu được. Chi tiết xem [kế hoạch thu](smarthome_normal_traffic_capture_plan.md#2-kiến-trúc-mạng-smart-home).
+Mọi thiết bị Wi-Fi dùng chung một SSID, bridge vào `br-lan`. Thu được traffic thiết bị ↔ Internet và thiết bị ↔ router (DNS, DHCP, MQTT). **Không** thu được unicast trực tiếp giữa hai thiết bị Wi-Fi, ví dụ điện thoại xem camera qua LAN. Chi tiết xem [kế hoạch thu](smarthome_normal_traffic_capture_plan.md#2-kiến-trúc-mạng-smart-home).
 
 ## Bộ kịch bản
 
@@ -49,19 +49,20 @@ Thiết bị người dùng và camera/IoT dùng hai SSID khác nhau nhưng cùn
 | [S08](scenarios/S08_mqtt_telemetry_background.md) | MQTT telemetry nền (chạy trong mọi phiên) | Xuyên suốt |
 | [S09](scenarios/S09_smart_home_control.md) | Điều khiển Smart Home | 20 phút |
 | [S10](scenarios/S10_normal_reconnect.md) | Kết nối lại bình thường | 15 phút |
-| [S11](scenarios/S11_mixed_household.md) | Sinh hoạt gia đình tổng hợp | 60 phút |
+| [S11](scenarios/S11_mixed_household.md) | Mô phỏng sinh hoạt gia đình | 60 phút |
 | [S12](scenarios/S12_peak_hour.md) | Giờ cao điểm hợp lệ | 30 phút |
 
 Mỗi file kịch bản gồm: topology, chi tiết thiết bị, thời gian thu, checklist công việc và checklist nghiệm thu.
 
 ## Quy trình thu
 
-1. **Chuẩn bị hạ tầng một lần:** router OpenWrt, hai SSID, static lease, Mosquitto, tắt flow offloading, SSH key từ máy thu vào router.
+1. **Chuẩn bị hạ tầng một lần:** router OpenWrt, SSID SmartHome, static lease, Mosquitto, tắt flow offloading, SSH key từ máy thu vào router.
 2. **Chọn kịch bản** và chuẩn bị thiết bị theo checklist trong file kịch bản.
 3. **Chạy script thu:**
    ```bat
-   powershell -ExecutionPolicy Bypass -File tools\capture_session.ps1 -Scenarios S04 -NUserDevices 4 -Config Nho
+   python tools/capture_session.py --scenarios S04 --n-user-devices 4 --config Nho
    ```
+   Script chạy được trên cả **Windows và Linux** (trên Linux dùng `python3`).
    Script tự kiểm tra trước khi thu, thu PCAP, ghi metadata và chấm nghiệm thu tự động.
 4. **Hoàn tất nghiệm thu bằng tay** theo mục 5 của file kịch bản: I/O Graph, đối chiếu nhật ký thao tác.
 
@@ -76,7 +77,7 @@ Hướng dẫn đầy đủ về script, tham số và xử lý sự cố: [tool
 | `data/logs/` | Log tcpdump và báo cáo nghiệm thu của từng phiên |
 | `devices.csv` | Bảng đối chiếu MAC ↔ IP ↔ mã thiết bị |
 
-> Thư mục `data/` **không được đưa lên git**, vì dữ liệu nặng và chứa thông tin cá nhân (IP, MAC, tên miền truy cập). Việc thu cần có sự đồng ý của các thành viên trong nhà. Trước khi chia sẻ dataset phải ẩn danh hóa dữ liệu.
+> Thư mục `data/` **không được đưa lên git**, vì dữ liệu nặng và chứa thông tin cá nhân (IP, MAC, tên miền truy cập). Việc thu cần có sự đồng ý của các thành viên lab tham gia; ưu tiên dùng tài khoản thử nghiệm. Trước khi chia sẻ dataset phải ẩn danh hóa dữ liệu.
 
 ## Cấu trúc thư mục
 
@@ -87,7 +88,7 @@ Hướng dẫn đầy đủ về script, tham số và xử lý sự cố: [tool
 ├── generalization_assessment.md               # Đánh giá tính tổng quát hóa của dataset
 ├── scenarios/                                 # 12 kịch bản chi tiết S01–S12
 ├── tools/
-│   ├── capture_session.ps1                    # Script thu chung
+│   ├── capture_session.py                     # Script thu chung (Windows và Linux)
 │   └── README.md                              # Hướng dẫn chạy script
 ├── CLAUDE.md                                  # Quy ước cho Claude Code
 └── data/                                      # Đầu ra khi thu (không commit)
@@ -95,7 +96,7 @@ Hướng dẫn đầy đủ về script, tham số và xử lý sự cố: [tool
 
 ## Giới hạn của dataset
 
-- Dữ liệu chỉ phản ánh **một ngôi nhà, ban ngày (07:00–18:00)**.
+- Dữ liệu được **mô phỏng trong lab**, một topology, chỉ ban ngày (07:00–18:00). Hành vi do người đóng vai và đường Internet của lab có thể khác hộ gia đình thật.
 - Các phiên thu ngắn và theo kịch bản, nên chưa có nhịp sinh hoạt liên tục cả ngày.
 - Mô hình train trên dataset này đáng tin cậy nhất với phân đoạn camera/IoT và với các tấn công tạo traffic khác rõ baseline (quét mạng, flood, brute force).
 

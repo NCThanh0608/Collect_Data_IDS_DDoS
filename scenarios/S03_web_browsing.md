@@ -21,13 +21,14 @@
                                br-lan
               +-------------------+--------------------+
               |                                        |
-       SSID "SmartHome-User"                    SSID "SmartHome-IoT"
-       ● PC01     .10  web tin tức, tìm kiếm    ○ CAM01 .30   ○ IOT01 .40
-       ● PC02     .11  web, thương mại điện tử  ○ CAM02 .31   ○ IOT02 .41
-       ● PHONE01  .15  Facebook / Instagram     ○ CAM03 .32   ○ IOT03 .42
-       ● PHONE02  .16  báo điện tử / TikTok đọc
-       [Lớn: ● PC04 .13, ● PHONE03 .17; các thiết bị còn lại ○]
+       Người dùng                               Camera, IoT
+       ● LAPTOP01 .10  web tin tức, tìm kiếm    ○ CAM01 .30   ○ IOT01 .40
+       ● LAPTOP02 .11  web, thương mại điện tử  ○ CAM02 .31   ○ IOT02 .41
+       ● PHONE01  .14  Facebook / Instagram     ○ CAM03 .32   ○ IOT03 .42
+       ● PHONE02  .15  báo điện tử / TikTok đọc
+       [Lớn: ● LAPTOP04 .13, ● PHONE03 .16; các thiết bị còn lại ○]
 
+Tất cả thiết bị Wi-Fi dùng chung SSID "SmartHome".
 Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 ```
 
@@ -37,15 +38,15 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 |---|---|---|---|---|---|
 | ROUTER | Router OpenWrt | 192.168.10.1 | — | Cả hai | Gateway, DNS resolver, capture |
 | CAPTURE-SERVER | Server capture | 192.168.10.60 | LAN port | Cả hai | Capture |
-| PC01 | PC/Laptop | 192.168.10.10 | SmartHome-User | Cả hai | Trình duyệt: báo điện tử, Google Search, Wikipedia |
-| PC02 | PC/Laptop | 192.168.10.11 | SmartHome-User | Cả hai | Trình duyệt: Shopee/Lazada/Tiki, so sánh sản phẩm, đọc review |
-| PC04 | PC/Laptop | 192.168.10.13 | SmartHome-User | Lớn | Trình duyệt: diễn đàn, tài liệu kỹ thuật, email web |
-| PHONE01 | Smartphone | 192.168.10.15 | SmartHome-User | Cả hai | App Facebook/Instagram: lướt feed, xem ảnh, bình luận |
-| PHONE02 | Smartphone | 192.168.10.16 | SmartHome-User | Cả hai | App báo điện tử, Google News, đọc bài |
-| PHONE03 | Smartphone | 192.168.10.17 | SmartHome-User | Lớn | App Zalo/Messenger nhắn tin, mở link chia sẻ |
-| Còn lại (PC03, PC05, PHONE04–05) | — | — | SmartHome-User | Lớn | Để chờ, không thao tác |
-| CAM01–CAM03 | IP camera | 192.168.10.30–32 | SmartHome-IoT | Cả hai | Nền, không ai xem |
-| IOT01–IOT03 | IoT MQTT | 192.168.10.40–42 | SmartHome-IoT | Cả hai | S08 |
+| LAPTOP01 | Laptop | 192.168.10.10 | SmartHome | Cả hai | Trình duyệt: báo điện tử, Google Search, Wikipedia |
+| LAPTOP02 | Laptop | 192.168.10.11 | SmartHome | Cả hai | Trình duyệt: Shopee/Lazada/Tiki, so sánh sản phẩm, đọc review |
+| LAPTOP04 | Laptop | 192.168.10.13 | SmartHome | Lớn | Trình duyệt: diễn đàn, tài liệu kỹ thuật, email web |
+| PHONE01 | Smartphone | 192.168.10.14 | SmartHome | Cả hai | App Facebook/Instagram: lướt feed, xem ảnh, bình luận |
+| PHONE02 | Smartphone | 192.168.10.15 | SmartHome | Cả hai | App báo điện tử, Google News, đọc bài |
+| PHONE03 | Smartphone | 192.168.10.16 | SmartHome | Lớn | App Zalo/Messenger nhắn tin, mở link chia sẻ |
+| Còn lại (LAPTOP03, PHONE04–06) | — | — | SmartHome | Lớn | Để chờ, không thao tác |
+| CAM01–CAM03 | IP camera | 192.168.10.30–32 | SmartHome | Cả hai | Nền, không ai xem |
+| IOT01–IOT03 | IoT MQTT | 192.168.10.40–42 | SmartHome | Cả hai | S08 |
 
 **Quy tắc thao tác:** mỗi trang đọc 10–60 giây trước khi chuyển; mỗi thiết bị truy cập ≥ 10 trang/domain khác nhau trong phiên; không tải file lớn, không xem video dài (> 1 phút).
 
@@ -60,8 +61,8 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 | Mốc (phút) | Hoạt động |
 |---|---|
 | 00–02 | Bắt đầu capture, mọi thiết bị chờ |
-| 02–10 | PC01, PC02 (PC04) duyệt web |
-| 10–20 | PHONE01, PHONE02 (PHONE03) dùng app; PC/laptop đọc chậm, thỉnh thoảng chuyển trang |
+| 02–10 | LAPTOP01, LAPTOP02 (LAPTOP04) duyệt web |
+| 10–20 | PHONE01, PHONE02 (PHONE03) dùng app; laptop đọc chậm, thỉnh thoảng chuyển trang |
 | 20–28 | Tất cả thiết bị chủ động cùng duyệt |
 | 28–30 | Đóng trình duyệt/app, dừng capture |
 
@@ -73,8 +74,8 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 - [ ] CAPTURE-SERVER còn trống ≥ 2 GB.
 
 ### 4.2. Setup device
-- [ ] Thiết bị chủ động đã kết nối SmartHome-User, đúng IP.
-- [ ] Trình duyệt PC/laptop: dùng cấu hình mặc định (Chrome/Edge/Firefox), **không** bật VPN hoặc proxy.
+- [ ] Thiết bị chủ động đã kết nối SmartHome, đúng IP.
+- [ ] Trình duyệt laptop: dùng cấu hình mặc định (Chrome/Edge/Firefox), **không** bật VPN hoặc proxy.
 - [ ] Smartphone: tắt dữ liệu di động, tắt VPN/Private Relay, đã đăng nhập sẵn app mạng xã hội.
 - [ ] Chuẩn bị danh sách website/app cho từng người (không cần cố định, chỉ để đảm bảo đa dạng).
 - [ ] Đóng app/tab không liên quan trước khi bắt đầu.

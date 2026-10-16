@@ -22,12 +22,13 @@
                                br-lan                           |
               +-------------------+--------------------+        |
               |                                        |        |
-       SSID "SmartHome-User"                    SSID "SmartHome-IoT"   |
+       Người dùng                               Camera, IoT   |
        ○ thiết bị người dùng                    ● IOT01 .40 ----+  telemetry định kỳ
        (theo kịch bản chính)                    ● IOT02 .41 ----+  sự kiện cửa/chuyển động
                                                 ● IOT03 .42 ----+  trạng thái ổ cắm
                                                 ○ CAM01–CAM03 .30–.32
 
+Tất cả thiết bị Wi-Fi dùng chung SSID "SmartHome".
 Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 ```
 
@@ -38,9 +39,9 @@ Broker chạy **trên ROUTER** nên mọi luồng IoT ↔ broker đều đi qua 
 | Device ID | Loại | IP | Mạng | Client ID MQTT | Publish | Subscribe | Chu kỳ / điều kiện | QoS |
 |---|---|---|---|---|---|---|---|---|
 | ROUTER | Broker Mosquitto | 192.168.10.1:1883 | — | — | — | — | — | — |
-| IOT01 | Cảm biến môi trường | 192.168.10.40 | SmartHome-IoT | `iot01` | `smarthome/iot01/telemetry` | `smarthome/iot01/cmd` | Cố định 1 giá trị trong {5, 15, 30, 60} giây cho mỗi phiên | 0 |
-| IOT02 | Cảm biến cửa / chuyển động | 192.168.10.41 | SmartHome-IoT | `iot02` | `smarthome/iot02/event` | `smarthome/iot02/cmd` | Khi có sự kiện (mở/đóng cửa, chuyển động) | 1 |
-| IOT03 | Ổ cắm / công tắc | 192.168.10.42 | SmartHome-IoT | `iot03` | `smarthome/iot03/state`, `smarthome/iot03/ack` | `smarthome/iot03/cmd` | Khi đổi trạng thái + định kỳ 30–60 giây | 1 |
+| IOT01 | Cảm biến môi trường | 192.168.10.40 | SmartHome | `iot01` | `smarthome/iot01/telemetry` | `smarthome/iot01/cmd` | Cố định 1 giá trị trong {5, 15, 30, 60} giây cho mỗi phiên | 0 |
+| IOT02 | Cảm biến cửa / chuyển động | 192.168.10.41 | SmartHome | `iot02` | `smarthome/iot02/event` | `smarthome/iot02/cmd` | Khi có sự kiện (mở/đóng cửa, chuyển động) | 1 |
+| IOT03 | Ổ cắm / công tắc | 192.168.10.42 | SmartHome | `iot03` | `smarthome/iot03/state`, `smarthome/iot03/ack` | `smarthome/iot03/cmd` | Khi đổi trạng thái + định kỳ 30–60 giây | 1 |
 
 Tất cả thiết bị: keepalive 60 giây, Last Will `smarthome/<device_id>/status` = `offline` (retain), publish `online` (retain) sau khi kết nối.
 
@@ -62,7 +63,7 @@ Tất cả thiết bị: keepalive 60 giây, Last Will `smarthome/<device_id>/st
 | Thời gian chạy | Bật trước phiên đầu tiên trong ngày, chạy liên tục đến hết ngày thu |
 | Phiên riêng | 1 phiên 60 phút / cấu hình, chỉ S08 + S01 (người dùng không thao tác) |
 | Chu kỳ IOT01 | Luân phiên giữa các ngày/phiên: 5 s → 15 s → 30 s → 60 s; ghi vào `notes` |
-| Sự kiện IOT02 | Tự nhiên trong sinh hoạt; trong phiên riêng tạo 5–10 sự kiện cách nhau không đều (1–10 phút) |
+| Sự kiện IOT02 | Do người vận hành tạo (mở/đóng cửa, đi qua cảm biến) xen kẽ trong các phiên; trong phiên riêng tạo 5–10 sự kiện cách nhau không đều (1–10 phút) |
 | Dung lượng PCAP ước tính (phiên riêng) | 5–30 MB |
 
 | Mốc (phút, phiên riêng) | Hoạt động |

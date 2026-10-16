@@ -21,13 +21,14 @@
                                br-lan
               +-------------------+--------------------+
               |                                        |
-       SSID "SmartHome-User"                    SSID "SmartHome-IoT"
-       ● PC01     .10  YouTube 1080p            ○ CAM01 .30   ○ IOT01 .40
-       ● PC02     .11  phim (Netflix/FPT Play)  ○ CAM02 .31   ○ IOT02 .41
-       ● PHONE01  .15  TikTok / Reels           ○ CAM03 .32   ○ IOT03 .42
-       ○ PHONE02  .16  chờ
-       [Lớn: ● PC03 .12 YouTube 4K/auto, ● PHONE03 .17 YouTube app; còn lại ○]
+       Người dùng                               Camera, IoT
+       ● LAPTOP01 .10  YouTube 1080p            ○ CAM01 .30   ○ IOT01 .40
+       ● LAPTOP02 .11  phim (Netflix/FPT Play)  ○ CAM02 .31   ○ IOT02 .41
+       ● PHONE01  .14  TikTok / Reels           ○ CAM03 .32   ○ IOT03 .42
+       ○ PHONE02  .15  chờ
+       [Lớn: ● LAPTOP03 .12 YouTube 4K/auto, ● PHONE03 .16 YouTube app; còn lại ○]
 
+Tất cả thiết bị Wi-Fi dùng chung SSID "SmartHome".
 Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 ```
 
@@ -37,14 +38,14 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 |---|---|---|---|---|---|
 | ROUTER | Router OpenWrt | 192.168.10.1 | — | Cả hai | Gateway, capture |
 | CAPTURE-SERVER | Server capture | 192.168.10.60 | LAN port | Cả hai | Capture |
-| PC01 | PC/Laptop | 192.168.10.10 | SmartHome-User | Cả hai | YouTube trên trình duyệt, chất lượng 1080p, seek và pause |
-| PC02 | PC/Laptop | 192.168.10.11 | SmartHome-User | Cả hai | Xem phim dài (Netflix/FPT Play/VieON), đổi tập |
-| PHONE01 | Smartphone | 192.168.10.15 | SmartHome-User | Cả hai | Video ngắn (TikTok/Facebook Reels), vuốt liên tục |
-| PC03 | PC/Laptop | 192.168.10.12 | SmartHome-User | Lớn | YouTube chất lượng Auto/4K nếu màn hình hỗ trợ |
-| PHONE03 | Smartphone | 192.168.10.17 | SmartHome-User | Lớn | App YouTube, đổi chất lượng 360p ↔ 1080p |
-| Còn lại | — | — | SmartHome-User | Cả hai | Để chờ |
-| CAM01–CAM03 | IP camera | 192.168.10.30–32 | SmartHome-IoT | Cả hai | Nền |
-| IOT01–IOT03 | IoT MQTT | 192.168.10.40–42 | SmartHome-IoT | Cả hai | S08 |
+| LAPTOP01 | Laptop | 192.168.10.10 | SmartHome | Cả hai | YouTube trên trình duyệt, chất lượng 1080p, seek và pause |
+| LAPTOP02 | Laptop | 192.168.10.11 | SmartHome | Cả hai | Xem phim dài (Netflix/FPT Play/VieON), đổi tập |
+| PHONE01 | Smartphone | 192.168.10.14 | SmartHome | Cả hai | Video ngắn (TikTok/Facebook Reels), vuốt liên tục |
+| LAPTOP03 | Laptop | 192.168.10.12 | SmartHome | Lớn | YouTube chất lượng Auto/4K nếu màn hình hỗ trợ |
+| PHONE03 | Smartphone | 192.168.10.16 | SmartHome | Lớn | App YouTube, đổi chất lượng 360p ↔ 1080p |
+| Còn lại | — | — | SmartHome | Cả hai | Để chờ |
+| CAM01–CAM03 | IP camera | 192.168.10.30–32 | SmartHome | Cả hai | Nền |
+| IOT01–IOT03 | IoT MQTT | 192.168.10.40–42 | SmartHome | Cả hai | S08 |
 
 ## 3. Thời gian thu
 
@@ -57,11 +58,11 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 | Mốc (phút) | Hoạt động |
 |---|---|
 | 00–02 | Bắt đầu capture, thiết bị chờ |
-| 02–08 | PC01 phát YouTube 1080p; PC02 bắt đầu phim |
-| 08–10 | PC01 **pause 2 phút**; PC02 tiếp tục |
-| 10–18 | PC01 resume, seek 2–3 lần; PHONE01 (PHONE03) bắt đầu video |
-| 18–22 | Đổi chất lượng: PC01 1080p → 480p → Auto; PHONE03 360p → 1080p |
-| 22–28 | Tất cả thiết bị chủ động phát đồng thời; PC02 chuyển tập/phim khác |
+| 02–08 | LAPTOP01 phát YouTube 1080p; LAPTOP02 bắt đầu phim |
+| 08–10 | LAPTOP01 **pause 2 phút**; LAPTOP02 tiếp tục |
+| 10–18 | LAPTOP01 resume, seek 2–3 lần; PHONE01 (PHONE03) bắt đầu video |
+| 18–22 | Đổi chất lượng: LAPTOP01 1080p → 480p → Auto; PHONE03 360p → 1080p |
+| 22–28 | Tất cả thiết bị chủ động phát đồng thời; LAPTOP02 chuyển tập/phim khác |
 | 28–30 | Dừng phát, dừng capture |
 
 ## 4. Checklist công việc
@@ -73,7 +74,7 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 - [ ] Kiểm tra đường truyền Internet đủ cho các luồng đồng thời (≥ 50 Mbps với cấu hình Lớn).
 
 ### 4.2. Setup device
-- [ ] Thiết bị chủ động kết nối SmartHome-User, đúng IP; tắt dữ liệu di động trên smartphone.
+- [ ] Thiết bị chủ động kết nối SmartHome, đúng IP; tắt dữ liệu di động trên smartphone.
 - [ ] Không dùng VPN; không tải trước video (chế độ offline/download).
 - [ ] Đăng nhập sẵn tài khoản dịch vụ video; chuẩn bị sẵn danh sách video/phim.
 - [ ] Tắt tự động cập nhật ứng dụng trong thời gian thu (nếu được).
@@ -95,7 +96,7 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 | 2 | Không có traffic SSH của CAPTURE-SERVER | `tcp.port == 22` → 0 gói | [ ] |
 | 3 | Mỗi thiết bị chủ động có downlink kéo dài ≥ 5 phút | Statistics → I/O Graph, lọc `ip.dst == <IP>` | [ ] |
 | 4 | Có luồng QUIC/TLS tới CDN video (ví dụ `googlevideo.com`) | `tls.handshake.extensions_server_name contains "video"` hoặc `quic` | [ ] |
-| 5 | Thấy khoảng giảm traffic khi PC01 pause (phút 08–10) | I/O Graph `ip.addr == 192.168.10.10` | [ ] |
+| 5 | Thấy khoảng giảm traffic khi LAPTOP01 pause (phút 08–10) | I/O Graph `ip.addr == 192.168.10.10` | [ ] |
 | 6 | Thấy thay đổi throughput khi đổi chất lượng (phút 18–22) | I/O Graph | [ ] |
 | 7 | MQTT nền vẫn đều đặn, không bị gián đoạn khi tải cao | `mqtt.msgtype == 3` | [ ] |
 | 8 | CPU router không vượt 90% kéo dài | Nhật ký `top` | [ ] |
