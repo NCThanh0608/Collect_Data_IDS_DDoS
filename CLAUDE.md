@@ -12,7 +12,8 @@ Bộ tài liệu và công cụ **thu normal traffic (không gán nhãn)** của
 | `scenarios/Sxx_<ten_tieng_anh>.md` | 12 kịch bản chi tiết |
 | `generalization_assessment.md` | Đánh giá tính tổng quát hóa của dataset |
 | `tools/capture_session.ps1` | Script thu chung: kiểm tra trước → thu → metadata → nghiệm thu |
-| `README.md` | Hướng dẫn chạy script |
+| `README.md` | Mô tả dự án: mục tiêu, phạm vi, mô hình mạng, bộ kịch bản, đầu ra, trạng thái |
+| `tools/README.md` | Hướng dẫn chạy script: chuẩn bị, tham số, đầu ra, xử lý sự cố |
 | `data/` | Đầu ra khi thu (PCAP, `metadata.csv`, logs). Bị gitignore, không commit |
 
 ## Quy ước bắt buộc (giữ nhất quán giữa mọi file)
@@ -67,11 +68,11 @@ Mọi file `scenarios/Sxx_*.md` theo cùng khung:
   - Tài liệu gốc.
   - Cả 12 file kịch bản.
   - `generalization_assessment.md`.
-  - `README.md`.
+  - `README.md` và `tools/README.md`.
   - `tools/capture_session.ps1` (các bảng `$ScenarioInfo`, `$CommonChecks`, `$ScenarioChecks`).
 - Sau khi sửa hàng loạt, `grep` lại tên cũ để chắc không còn sót.
 - Trong sơ đồ ASCII, giữ thẳng cột khi đổi độ dài tên.
-- Thay đổi thời lượng, chu kỳ tách file hoặc dung lượng ổ của kịch bản phải cập nhật cả `$ScenarioInfo` trong script và bảng mặc định trong `README.md`.
+- Thay đổi thời lượng, chu kỳ tách file hoặc dung lượng ổ của kịch bản phải cập nhật cả `$ScenarioInfo` trong script và bảng mặc định trong `tools/README.md`.
 
 ## Script `tools/capture_session.ps1`
 

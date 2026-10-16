@@ -251,7 +251,7 @@ ssh root@192.168.10.1 \
 - `-G 3600`: tách file mỗi 1 giờ để tránh file quá lớn.
 - Khi dừng capture (Ctrl+C), tcpdump trên router in số liệu `packets captured / received by filter / dropped by kernel`. Ghi lại các con số này vào metadata.
 
-**Cách C – Script chung cho mọi kịch bản (khuyến nghị):** [tools/capture_session.ps1](tools/capture_session.ps1), chạy trên CAPTURE-SERVER (Windows, đã cài Wireshark và OpenSSH client, SSH vào router bằng key).
+**Cách C – Script chung cho mọi kịch bản (khuyến nghị):** [tools/capture_session.ps1](tools/capture_session.ps1), chạy trên CAPTURE-SERVER (Windows, đã cài Wireshark và OpenSSH client, SSH vào router bằng key). Hướng dẫn đầy đủ: [tools/README.md](tools/README.md).
 
 ```bat
 :: Thu một kịch bản (S08 tự được thêm), 4 thiết bị người dùng
