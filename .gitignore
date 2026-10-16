@@ -1,0 +1,65 @@
+# ---------------------------------------------------------------------------
+# Dữ liệu thu (lớn và chứa dữ liệu cá nhân: IP/MAC, DNS, SNI) – KHÔNG commit
+# ---------------------------------------------------------------------------
+data/
+*.pcap
+*.pcapng
+*.pcap.gz
+*.pcapng.gz
+*.cap
+*.zip
+*.7z
+
+# Bảng thiết bị thật (chứa MAC) và log phiên thu nếu để ngoài data/
+devices.csv
+metadata.csv
+*_tcpdump.log
+*_capture.cmd
+*_report.csv
+
+# ---------------------------------------------------------------------------
+# Khóa và thông tin đăng nhập (SSH, MQTT, TLS)
+# ---------------------------------------------------------------------------
+id_rsa*
+id_ed25519*
+*.pem
+*.key
+*.p12
+*.pfx
+known_hosts
+mosquitto_passwd
+passwd
+.env
+.env.*
+
+# ---------------------------------------------------------------------------
+# Xuất tài liệu / file tạm của Office
+# ---------------------------------------------------------------------------
+~$*
+*.tmp
+
+# ---------------------------------------------------------------------------
+# Python (script phân tích sau này)
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# ---------------------------------------------------------------------------
+# Hệ điều hành và editor
+# ---------------------------------------------------------------------------
+Thumbs.db
+Desktop.ini
+.DS_Store
+$RECYCLE.BIN/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*~
+
+# Thiết lập cá nhân của Claude Code (thiết lập dùng chung để trong .claude/settings.json)
+.claude/settings.local.json
