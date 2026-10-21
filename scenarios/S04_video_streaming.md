@@ -70,7 +70,7 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 ### 4.1. Setup hạ tầng
 - [ ] Flow offloading tắt; đồng hồ các máy lệch ≤ 1 giây.
 - [ ] Mosquitto đang chạy, S08 hoạt động.
-- [ ] CAPTURE-SERVER còn trống ≥ 12 GB; ưu tiên Cách B (`-G`) để tách file.
+- [ ] CAPTURE-SERVER còn trống ≥ 12 GB; dùng script thu để tách PCAP khi đạt ngưỡng dung lượng.
 - [ ] Kiểm tra đường truyền Internet đủ cho các luồng đồng thời (≥ 50 Mbps với cấu hình Lớn).
 
 ### 4.2. Setup device

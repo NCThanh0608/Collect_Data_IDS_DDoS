@@ -52,6 +52,8 @@ Mọi thiết bị Wi-Fi dùng chung một SSID, bridge vào `br-lan`. Thu đư�
 | [S11](scenarios/S11_mixed_household.md) | Mô phỏng sinh hoạt gia đình | 60 phút |
 | [S12](scenarios/S12_peak_hour.md) | Giờ cao điểm hợp lệ | 30 phút |
 
+Tool chỉ tách PCAP khi file đạt ngưỡng dung lượng (mặc định 1000 MB, đổi bằng `--max-file-mb`), không tách theo phút; số file phụ thuộc lưu lượng thực tế. S08 chạy nền không tạo file riêng ngoài PCAP của phiên đang thu; các kịch bản chạy chồng dùng chung PCAP. **Một file hay nhiều file của cùng phiên đều không đảm bảo tính tổng quát hóa.** Cần lặp các kịch bản trên nhiều ngày, ở cả cấu hình Nhỏ/Lớn khi áp dụng, rải trong khung 07:00–18:00 và đánh giá trên những ngày/phiên chưa dùng để train. Xem [kế hoạch thu](smarthome_normal_traffic_capture_plan.md#4-bộ-kịch-bản-normal-traffic-cho-smart-home) và [bảng tham số thu](tools/README.md#4-tham-số).
+
 Mỗi file kịch bản gồm: topology, chi tiết thiết bị, thời gian thu, checklist công việc và checklist nghiệm thu.
 
 ## Quy trình thu
@@ -60,7 +62,7 @@ Mỗi file kịch bản gồm: topology, chi tiết thiết bị, thời gian th
 2. **Chọn kịch bản** và chuẩn bị thiết bị theo checklist trong file kịch bản.
 3. **Chạy script thu:**
    ```bat
-   python tools/capture_session.py --scenarios S04 --n-user-devices 4 --config Nho
+   python tools/capture_session.py --scenarios S04 --n-user-devices 4 --config small
    ```
    Script chạy được trên cả **Windows và Linux** (trên Linux dùng `python3`).
    Script tự kiểm tra trước khi thu, thu PCAP, ghi metadata và chấm nghiệm thu tự động.
@@ -72,7 +74,7 @@ Hướng dẫn đầy đủ về script, tham số và xử lý sự cố: [tool
 
 | File | Nội dung |
 |---|---|
-| `data/pcap/SESxxx_YYYYMMDD_HHMMSS.pcap` | PCAP gốc thu trên `br-lan` |
+| `data/pcap/SESxxx_YYYYMMDD_HHMMSS.pcap` | PCAP gốc thu trên `br-lan`; thêm hậu tố thứ tự nếu nhiều file được tách trong cùng một giây |
 | `data/metadata.csv` | Mô tả từng phiên: thời gian, cấu hình, số thiết bị, các kịch bản đã chạy, số gói thu được và bị bỏ sót |
 | `data/logs/` | Log tcpdump và báo cáo nghiệm thu của từng phiên |
 | `devices.csv` | Bảng đối chiếu MAC ↔ IP ↔ mã thiết bị |

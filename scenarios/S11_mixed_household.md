@@ -59,7 +59,7 @@ Mỗi thiết bị do một thành viên lab vận hành, đóng vai một "thà
 | Thời lượng một lần thu | 60 phút |
 | Số lần thu | 3 lần mỗi cấu hình trong khung 07:00–18:00, xếp lịch trước khi đủ người vận hành tất cả thiết bị |
 | Dung lượng PCAP ước tính | 3–8 GB (Nhỏ), 8–20 GB (Lớn) |
-| Cách lưu | Cách B, tách file mỗi 30 phút (`-G 1800`) |
+| Cách lưu | Cách B (script), tách file khi đạt 1000 MB hoặc ngưỡng `--max-file-mb` đã chọn |
 
 | Mốc (phút) | Hoạt động |
 |---|---|
@@ -76,7 +76,7 @@ Mỗi thiết bị do một thành viên lab vận hành, đóng vai một "thà
 ### 4.1. Setup hạ tầng
 - [ ] Flow offloading tắt; đồng hồ các máy lệch ≤ 1 giây.
 - [ ] Mosquitto chạy, S08 hoạt động.
-- [ ] CAPTURE-SERVER còn trống ≥ 25 GB; dùng Cách B với `-G 1800`.
+- [ ] CAPTURE-SERVER còn trống ≥ 25 GB; dùng Cách B để tách file theo dung lượng.
 - [ ] Mở phiên SSH thứ hai từ CAPTURE-SERVER để theo dõi CPU/RAM router (`top -d 10`), lưu output.
 
 ### 4.2. Setup device

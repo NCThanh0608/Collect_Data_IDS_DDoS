@@ -65,7 +65,7 @@ Chú thích: ● hoạt động chủ động
 | Thời lượng một lần thu | 30 phút |
 | Số lần thu | 2–3 lần trong khung 07:00–18:00, xếp lịch trước khi đủ 10 người vận hành thiết bị |
 | Dung lượng PCAP ước tính | 10–25 GB / lần |
-| Cách lưu | Cách B, tách file mỗi 10 phút (`-G 600`) |
+| Cách lưu | Cách B (script), tách file khi đạt 1000 MB hoặc ngưỡng `--max-file-mb` đã chọn |
 
 | Mốc (phút) | Hoạt động |
 |---|---|

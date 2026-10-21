@@ -81,6 +81,7 @@ Dữ liệu chỉ gồm traffic bình thường và **không gán nhãn**. Vì v
 
 ### 4.4. Khác biệt do cách thu theo kịch bản
 
+- **Số file không phải số mẫu độc lập.** `dumpcap` có thể tách một phiên thành nhiều PCAP khi đạt ngưỡng dung lượng, nhưng các file đó vẫn thuộc cùng một lần thu và cùng điều kiện lab. Chỉ thu một phiên cho mỗi kịch bản không đủ để kiểm tra khả năng tổng quát hóa sang ngày hoặc điều kiện khác.
 - **Phiên thu ngắn** (15–80 phút), thao tác theo timeline nên đều đặn hơn đời thực. Sinh hoạt thật kéo dài liên tục nhiều giờ, xen kẽ ngẫu nhiên.
 - **Flow dài bị cắt** ở ranh giới phiên. Baseline thiếu các kết nối sống nhiều giờ, ví dụ stream liên tục nhiều giờ, kết nối cloud của camera.
 - **Không có chu kỳ ngày/tuần liên tục.** Dữ liệu chỉ là các mảnh rời trong khung ban ngày, nên mô hình không học được nhịp sinh hoạt cả ngày, ví dụ "tối thứ Bảy luôn đông".
@@ -138,7 +139,7 @@ Dữ liệu không có traffic tấn công, nên không tính được detection
 
 Không cần đổi khung kịch bản. Bốn việc mang lại nhiều nhất, theo thứ tự ưu tiên:
 
-1. **Thu liên tục nhiều giờ trong khung 07:00–18:00** ở nhiều ngày khác nhau, không theo kịch bản: thành viên lab dùng thiết bị tự do như ở nhà. Việc này bù một phần độ phủ thời gian và các flow dài. Nếu sau này thu được buổi tối/ban đêm, đó là bổ sung có giá trị nhất.
+1. **Lặp mỗi kịch bản qua nhiều phiên và nhiều ngày trong khung 07:00–18:00**, đồng thời thu liên tục nhiều giờ không theo kịch bản để thành viên lab dùng thiết bị tự do như ở nhà. Việc này bổ sung biến thiên giữa các ngày, bù một phần độ phủ thời gian và các flow dài. Nếu sau này thu được buổi tối/ban đêm, đó là bổ sung có giá trị nhất.
 2. **Giữ lại các phiên có cập nhật OS/firmware** và thêm vài sự kiện hiếm hợp lệ (mất điện đồng loạt, router reboot, mất mạng ISP, khách kết nối), thay vì loại bỏ chúng.
 3. **Chuẩn bị một tập tấn công riêng để test**, thu trên cùng hạ tầng, để đo được độ chính xác thật của mô hình.
 4. **Thu một tập kiểm chứng nhỏ ở nhà thật** (vài giờ, cùng nhóm thiết bị) để đo độ lệch giữa dữ liệu lab và thực tế.

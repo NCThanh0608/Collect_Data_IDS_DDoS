@@ -29,6 +29,8 @@ Không cần bổ sung máy ảo để đạt đủ số lượng nếu đã có
 | **Nhỏ**  |      2 |          2 |                    **4** |                       **10** |
 | **Lớn**  |      4 |          6 |                   **10** |                       **16** |
 
+Cấu hình Nhỏ dùng `--config small`; cấu hình Lớn dùng `--config large`. Giá trị này được ghi bằng chữ thường vào cột `config` của `metadata.csv`.
+
 Có thể dùng các mức trung gian 6 hoặc 8 thiết bị người dùng, nhưng 3 camera và 3 MQTT vẫn duy trì để so sánh nhất quán. Kịch bản **S12** chỉ chạy được với cấu hình có **≥ 8** thiết bị người dùng.
 
 ### 1.3. Nguyên tắc thu
@@ -185,6 +187,10 @@ Quy ước topic: `smarthome/<device_id>/<message_type>`, chữ thường, khôn
 | **S11** | Mixed: mô phỏng gia đình   | Toàn mạng                                          | Video + web + camera + MQTT + sync đồng thời                      |          45–80 phút |
 | **S12** | Giờ cao điểm hợp lệ        | 8–10 user devices + 3 camera + 3 IoT               | Nhiều người truy cập song song, không dùng packet flood generator |          20–40 phút |
 
+Script thu chỉ tách file khi mỗi PCAP đạt ngưỡng dung lượng (mặc định 1000 MB, có thể đổi bằng `--max-file-mb`), không tách theo phút. Số PCAP của một phiên phụ thuộc lưu lượng thực tế, không thể xác định trước từ thời lượng kịch bản và **không phải số lần cần chạy mỗi kịch bản**. S08 chạy nền không tạo thêm file riêng; các kịch bản chạy chồng chia sẻ PCAP của cùng phiên. Xem [bảng mặc định theo kịch bản](tools/README.md#4-tham-số).
+
+**Để xây dựng và kiểm tra baseline:** lặp mỗi kịch bản thành nhiều phiên độc lập trên nhiều ngày, rải trong khung 07:00–18:00; dùng cả cấu hình Nhỏ và Lớn ở kịch bản áp dụng được (S12 chỉ cấu hình Lớn). Thay đổi tự nhiên người vận hành, ứng dụng, thời điểm và cường độ sử dụng, đồng thời ghi các điều kiện đó vào nhật ký/`notes`. Thu thêm các phiên dài với thao tác tự do ngoài timeline kịch bản. Khi đánh giá mô hình, giữ nguyên cả phiên hoặc cả ngày làm tập kiểm tra; không rải các flow từ cùng một phiên vào cả train và test. **Không có số PCAP cố định nào tự đảm bảo tính tổng quát hóa**; nếu kết quả trên ngày/điều kiện chưa thấy kém, cần thu bổ sung đúng các điều kiện còn thiếu.
+
 **Chi tiết từng kịch bản** (topology, thiết bị, thời gian thu, checklist công việc, checklist nghiệm thu):
 
 | ID | File chi tiết |
@@ -232,22 +238,11 @@ Server capture (`192.168.1.60`) SSH vào router và nhận luồng capture từ 
 
 Lưu output dưới dạng `.pcap` hoặc `.pcapng` theo quy ước đặt tên ở mục 6.
 
-**Cách B – SSH + tcpdump, ghi xoay vòng trên server (khuyến nghị cho phiên dài/S11, S12):**
-
-```sh
-ssh root@192.168.1.1 \
-  "tcpdump -i br-lan -s 0 -U -w - 'not (host 192.168.1.60 and port 22)'" \
-  | tcpdump -r - -w "pcap/<session_id>_%Y%m%d_%H%M%S.pcap" -G 3600
-```
-
-- `-G 3600`: tách file mỗi 1 giờ để tránh file quá lớn.
-- Khi dừng capture (Ctrl+C), tcpdump trên router in số liệu `packets captured / received by filter / dropped by kernel`. Ghi lại các con số này vào metadata.
-
-**Cách C – Script chung cho mọi kịch bản (khuyến nghị):** [tools/capture_session.py](tools/capture_session.py), chạy trên CAPTURE-SERVER **Windows hoặc Linux** (cần Python ≥ 3.8, Wireshark CLI, OpenSSH client, SSH vào router bằng key). Hướng dẫn đầy đủ: [tools/README.md](tools/README.md).
+**Cách B – Script chung cho mọi kịch bản (khuyến nghị, nhất là phiên dài/S11, S12):** [tools/capture_session.py](tools/capture_session.py), chạy trên CAPTURE-SERVER **Windows hoặc Linux** (cần Python ≥ 3.8, Wireshark CLI, OpenSSH client, SSH vào router bằng key). Hướng dẫn đầy đủ: [tools/README.md](tools/README.md).
 
 ```sh
 # Thu một kịch bản (S08 tự được thêm), 4 thiết bị người dùng  (Linux: dùng python3)
-python tools/capture_session.py --scenarios S04 --n-user-devices 4 --config Nho
+python tools/capture_session.py --scenarios S04 --n-user-devices 4 --config small
 
 # Nhiều kịch bản chạy chồng, kèm ghi chú
 python tools/capture_session.py --scenarios S05,S07 --n-user-devices 10 --notes "cuoi tuan"
@@ -258,7 +253,7 @@ python tools/capture_session.py --scenarios S07 --check-only --session-id SES005
 
 Script tự thực hiện:
 1. Kiểm tra trước khi thu: flow offloading, Mosquitto, tcpdump trên router, lệch đồng hồ, dung lượng ổ, khung giờ 07:00–18:00.
-2. Thu bằng `tcpdump` trên router, đẩy về `dumpcap`. Thời lượng và chu kỳ tách file lấy theo kịch bản. Tự dừng khi hết giờ.
+2. Thu bằng `tcpdump` trên router, đẩy về `dumpcap`. Thời lượng phiên lấy theo kịch bản; mỗi PCAP tự tách khi đạt 1000 MB (có thể đổi bằng `--max-file-mb`). Hết thời lượng thì dừng thu, không dùng thời gian để tách file.
 3. Đổi tên file theo quy ước, đọc số liệu bằng `capinfos`, ghi `data/metadata.csv`.
 4. Chạy các bộ lọc nghiệm thu tự động bằng `tshark`, xuất `data/logs/<session_id>_report.csv`. Các tiêu chí cần xem bằng mắt (I/O Graph, đối chiếu nhật ký) vẫn làm theo mục 5 của từng file kịch bản.
 
@@ -280,7 +275,7 @@ Script tự thực hiện:
 | **Thiết bị**  | `devices.csv`       | Bảng đối chiếu MAC ↔ IP ↔ tên thiết bị |
 
 
-Quy ước tên file PCAP: `<session_id>_<YYYYMMDD>_<HHMMSS>.pcap`, ví dụ `SES001_20261012_145800.pcap`.
+Quy ước tên file PCAP: `<session_id>_<YYYYMMDD>_<HHMMSS>.pcap`, ví dụ `SES001_20261012_145800.pcap`. Nếu nhiều file được tách trong cùng một giây, các file sau thêm hậu tố thứ tự, ví dụ `SES001_20261012_145800_00002.pcap`, để không ghi đè dữ liệu.
 
 ### 6.1. Metadata mẫu (chỉ mô tả phiên thu)
 
@@ -288,14 +283,14 @@ Quy ước tên file PCAP: `<session_id>_<YYYYMMDD>_<HHMMSS>.pcap`, ví dụ `SE
 
 ```csv
 session_id,pcap_file,start_time,end_time,config,n_user_devices,active_scenarios,pkts_captured,pkts_dropped,notes
-SES001,SES001_20261012_145800.pcap,2026-10-12T14:58:00+07:00,2026-10-12T15:12:00+07:00,Nho,4,S02;S08,,,
-SES002,SES002_20261012_170800.pcap,2026-10-12T17:08:00+07:00,2026-10-12T17:35:00+07:00,Nho,4,S04;S08,,,
-SES003,SES003_20261013_093000.pcap,2026-10-13T09:30:00+07:00,2026-10-13T09:52:00+07:00,Lon,10,S05;S07;S08,,,
-SES004,SES004_20261013_134500.pcap,2026-10-13T13:45:00+07:00,2026-10-13T14:14:00+07:00,Lon,10,S03;S08,,,
+SES001,SES001_20261012_145800.pcap,2026-10-12T14:58:00+07:00,2026-10-12T15:12:00+07:00,small,4,S02;S08,,,
+SES002,SES002_20261012_170800.pcap,2026-10-12T17:08:00+07:00,2026-10-12T17:35:00+07:00,small,4,S04;S08,,,
+SES003,SES003_20261013_093000.pcap,2026-10-13T09:30:00+07:00,2026-10-13T09:52:00+07:00,large,10,S05;S07;S08,,,
+SES004,SES004_20261013_134500.pcap,2026-10-13T13:45:00+07:00,2026-10-13T14:14:00+07:00,large,10,S03;S08,,,
 ```
 
 - `active_scenarios`: liệt kê mọi kịch bản chạy trong phiên, ngăn cách bằng `;` (S08 luôn có).
-- Nếu một phiên bị tách thành nhiều file bởi `-G`, ghi một dòng cho mỗi file với cùng `session_id`.
+- Nếu một phiên bị tách thành nhiều file vì đạt ngưỡng dung lượng, ghi một dòng cho mỗi file với cùng `session_id`.
 
 ### 6.2. Bảng thiết bị
 
@@ -323,7 +318,7 @@ CAPTURE-SERVER,Capture,aa:bb:cc:00:00:60,192.168.1.60,LAN port,Bị loại khỏ
 - [ ] SSID SmartHome có mật khẩu riêng, chỉ thiết bị trong `devices.csv` được kết nối; kênh Wi-Fi đã cố định và ghi lại.
 
 **Sau khi thu**
-- [ ] Có PCAP cho tất cả kịch bản S01–S12 (S12 chỉ với cấu hình ≥ 8 thiết bị người dùng); S08 có mặt trong mọi phiên.
+- [ ] Có nhiều phiên thu độc lập trên nhiều ngày cho tất cả kịch bản S01–S12 (S12 chỉ với cấu hình Lớn); S08 có mặt trong mọi phiên. Đếm theo `session_id`, không đếm số PCAP được tách từ cùng một phiên.
 - [ ] Phủ đủ các mức tải: nhàn rỗi, ít, vừa, cao hợp lệ; cả cấu hình Nhỏ và Lớn.
 - [ ] Đã kiểm tra packet drop, CPU/RAM router; số liệu được ghi vào `metadata.csv`.
 - [ ] PCAP không chứa traffic SSH của server capture; có đủ luồng camera ↔ viewer và IoT ↔ broker.

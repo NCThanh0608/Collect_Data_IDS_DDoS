@@ -39,6 +39,7 @@ Bộ tài liệu và công cụ **thu normal traffic (không gán nhãn)** của
 - **Cấu hình:**
   - Nhỏ = `LAPTOP01–LAPTOP02` + `PHONE01–PHONE02` (cột "Cả hai").
   - Lớn = `LAPTOP01–LAPTOP04` + `PHONE01–PHONE06` (4 laptop + 6 smartphone).
+  - Giá trị của `--config` và cột `config` trong metadata là `small` hoặc `large` (chữ thường); tên Nhỏ/Lớn chỉ dùng trong phần mô tả tiếng Việt.
   - Camera và IoT luôn đủ 3 + 3.
   - S12 chỉ chạy với cấu hình Lớn.
 - **MQTT:**
@@ -48,7 +49,7 @@ Bộ tài liệu và công cụ **thu normal traffic (không gán nhãn)** của
 - **Bộ lọc Wireshark cho nhiều IP:** dùng `ip.addr in {192.168.1.30 192.168.1.31 192.168.1.32}`. Không dùng CIDR như `/30`, vì `/30` lệch dải.
 - **Metadata:**
   - Thời gian theo ISO 8601 có timezone `+07:00`.
-  - Tên PCAP dạng `SESxxx_YYYYMMDD_HHMMSS.pcap`.
+  - Tên PCAP dạng `SESxxx_YYYYMMDD_HHMMSS.pcap`; nếu nhiều file được tách trong cùng một giây, các file sau thêm số thứ tự của `dumpcap` trước `.pcap` (ví dụ `_00002`) để tránh trùng tên.
   - Cột: `session_id,pcap_file,start_time,end_time,config,n_user_devices,active_scenarios,pkts_captured,pkts_dropped,notes`.
 
 ## Cấu trúc file kịch bản
@@ -72,17 +73,17 @@ Mọi file `scenarios/Sxx_*.md` theo cùng khung:
   - `tools/capture_session.py` (các bảng `SCENARIOS`, `COMMON_CHECKS`, `SCENARIO_CHECKS`).
 - Sau khi sửa hàng loạt, `grep` lại tên cũ để chắc không còn sót.
 - Trong sơ đồ ASCII, giữ thẳng cột khi đổi độ dài tên.
-- Thay đổi thời lượng, chu kỳ tách file hoặc dung lượng ổ của kịch bản phải cập nhật cả `SCENARIOS` trong script và bảng mặc định trong `tools/README.md`.
+- Thay đổi thời lượng hoặc dung lượng ổ của kịch bản phải cập nhật cả `SCENARIOS` trong script và bảng mặc định trong `tools/README.md`. Ngưỡng tách theo dung lượng dùng chung cho mọi kịch bản.
 
 ## Script `tools/capture_session.py`
 
 - Chạy trên **Windows và Linux**, Python ≥ 3.8, **chỉ dùng thư viện chuẩn**. Không thêm phụ thuộc pip.
 - Gọi Wireshark CLI (`dumpcap`, `tshark`, `capinfos`) và `ssh` bằng `subprocess` với **danh sách tham số**, không dùng `shell=True`. Như vậy bộ lọc có dấu `"` hay dấu cách được truyền đúng trên cả hai hệ điều hành.
 - **Tìm công cụ** qua `find_tool()`, theo thứ tự: `--wireshark-dir` → `PATH` → `C:\Program Files\Wireshark` (Windows). Không hard-code đường dẫn ở chỗ khác.
-- **Đường ống thu:** `subprocess.Popen(ssh) → stdout → Popen(dumpcap -i - -F pcap -b duration:N)`. Python truyền dữ liệu nhị phân an toàn. Đóng `ssh.stdout` ở tiến trình cha để `dumpcap` nhận EOF.
+- **Đường ống thu:** `subprocess.Popen(ssh) → stdout → Popen(dumpcap -i - -F pcap -b filesize:K)`. `K` là ngưỡng theo kB, mặc định 1.000.000 kB (1000 MB), có thể đổi bằng `--max-file-mb`. Chỉ tách file khi đạt ngưỡng dung lượng; thời lượng phiên chỉ quyết định lúc dừng thu. Python truyền dữ liệu nhị phân an toàn. Đóng `ssh.stdout` ở tiến trình cha để `dumpcap` nhận EOF.
 - **Ctrl+C:** bắt `KeyboardInterrupt`, chờ `dumpcap` ghi nốt rồi vẫn ghi metadata và nghiệm thu.
 - **Router:** dùng BusyBox `timeout <giây> tcpdump …` để tcpdump tự dừng và in `dropped by kernel` ra stderr; stderr của ssh được ghi vào `data/logs/<session>_tcpdump.log`.
-- **Tên file:** `dumpcap` ghi `SES001_00001_YYYYMMDDhhmmss.pcap`, script đổi thành `SES001_YYYYMMDD_hhmmss.pcap`.
+- **Tên file:** `dumpcap` ghi `SES001_00001_YYYYMMDDhhmmss.pcap`, script đổi thành `SES001_YYYYMMDD_hhmmss.pcap` hoặc thêm hậu tố thứ tự khi trùng giây. Không ghi đè PCAP đã tồn tại.
 - **Đầu ra console:** stdout được ép UTF-8 để in tiếng Việt cả khi output bị chuyển hướng trên Windows. Màu dùng mã ANSI; `os.system("")` bật ANSI trên console Windows.
 - **CSV:** ghi bằng `utf-8-sig` khi tạo file mới để Excel đọc đúng tiếng Việt.
 - **Mã thoát:** `0` nếu không có tiêu chí FAIL, `1` nếu có.

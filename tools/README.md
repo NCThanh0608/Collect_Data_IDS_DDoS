@@ -16,7 +16,7 @@ Mỗi lần chạy là **một phiên thu**. Script làm lần lượt bốn bư
    - Đồng hồ router lệch ≤ 2 giây so với máy thu.
    - Ổ đĩa còn đủ dung lượng.
    - Phiên nằm trong khung 07:00–18:00.
-2. **Thu PCAP:** router chạy `tcpdump` trên `br-lan`, đã loại traffic SSH của máy thu. Dữ liệu được đẩy qua SSH về `dumpcap` trên máy thu, tự tách file và tự dừng khi hết thời lượng.
+2. **Thu PCAP:** router chạy `tcpdump` trên `br-lan`, đã loại traffic SSH của máy thu. Dữ liệu được đẩy qua SSH về `dumpcap` trên máy thu, chỉ tách file khi đạt ngưỡng dung lượng và tự dừng khi hết thời lượng phiên.
 3. **Ghi số liệu:** đổi tên file theo quy ước, đọc số liệu bằng `capinfos`, rồi thêm dòng vào `data/metadata.csv`.
 4. **Nghiệm thu tự động:** chạy các bộ lọc bằng `tshark`, in bảng PASS/FAIL và lưu báo cáo.
 
@@ -90,7 +90,7 @@ Các ví dụ bên dưới viết `python`; trên Linux thay bằng `python3`.
 ### 3.1. Lệnh cơ bản
 
 ```sh
-python tools/capture_session.py --scenarios <Sxx> --n-user-devices <số thiết bị> --config <Nho|Lon>
+python tools/capture_session.py --scenarios <Sxx> --n-user-devices <count> --config <small|large>
 ```
 
 Xem toàn bộ tham số: `python tools/capture_session.py --help`.
@@ -99,22 +99,25 @@ Xem toàn bộ tham số: `python tools/capture_session.py --help`.
 
 ```sh
 # S01 – Mạng nhàn rỗi, cấu hình Nhỏ (4 thiết bị người dùng)
-python tools/capture_session.py --scenarios S01 --n-user-devices 4 --config Nho --notes "buoi sang"
+python tools/capture_session.py --scenarios S01 --n-user-devices 4 --config small --notes "buoi sang"
 
 # S04 – Video, cấu hình Lớn
-python tools/capture_session.py --scenarios S04 --n-user-devices 10 --config Lon
+python tools/capture_session.py --scenarios S04 --n-user-devices 10 --config large
 
 # S05 + S07 chạy chồng nhau trong cùng một phiên (thời lượng lấy theo kịch bản đầu tiên: S05)
 python tools/capture_session.py --scenarios S05,S07 --n-user-devices 10
 
 # S08 – Phiên MQTT riêng 60 phút
-python tools/capture_session.py --scenarios S08 --n-user-devices 4 --config Nho --notes "IOT01 chu ky 15s"
+python tools/capture_session.py --scenarios S08 --n-user-devices 4 --config small --notes "IOT01 chu ky 15s"
 
 # S11 – Sinh hoạt tổng hợp, kéo dài 75 phút thay vì 60
 python tools/capture_session.py --scenarios S11 --n-user-devices 10 --duration-min 75 --notes "cuoi tuan"
 
 # S12 – Giờ cao điểm (chỉ chạy với cấu hình Lớn)
-python tools/capture_session.py --scenarios S12 --n-user-devices 10 --config Lon
+python tools/capture_session.py --scenarios S12 --n-user-devices 10 --config large
+
+# Tách PCAP ở 500 MB/file thay vì mức mặc định 1000 MB/file
+python tools/capture_session.py --scenarios S12 --n-user-devices 10 --config large --max-file-mb 500
 ```
 
 ### 3.3. Thu thử lần đầu
@@ -156,8 +159,9 @@ Script ghi `metadata.csv` nếu phiên chưa có trong đó, rồi chạy nghi�
 |---|---|---|
 | `--scenarios` | *(bắt buộc)* | Một hoặc nhiều kịch bản, ví dụ `S04`, `S05,S07` hoặc `S05 S07`. **S08 luôn được tự thêm** |
 | `--n-user-devices` | `0` | Số thiết bị người dùng đang kết nối mạng trong phiên |
-| `--config` | `Lon` | `Nho` hoặc `Lon`. S12 bắt buộc `Lon` |
+| `--config` | `large` | `small` (Nhỏ) hoặc `large` (Lớn); không phân biệt chữ hoa/thường. S12 bắt buộc `large` |
 | `--duration-min` | theo kịch bản | Thời lượng thu (phút). Để trống thì lấy theo kịch bản đầu tiên trong `--scenarios` |
+| `--max-file-mb` | `1000` | Tách sang PCAP mới khi file đạt khoảng ngưỡng này (MB). Không tách theo phút. Phải ≥ 1 |
 | `--notes` | trống | Ghi chú đưa vào cột `notes` của `metadata.csv` |
 | `--check-only` | tắt | Không thu, chỉ ghi metadata (nếu thiếu) và nghiệm thu. Dùng kèm `--session-id` |
 | `--session-id` | tự tăng | Mã phiên, ví dụ `SES005`. Khi thu mới, script tự lấy số tiếp theo trong `metadata.csv` |
@@ -171,22 +175,22 @@ Script ghi `metadata.csv` nếu phiên chưa có trong đó, rồi chạy nghi�
 
 **Giá trị mặc định theo kịch bản:**
 
-| Kịch bản | Thời lượng (phút) | Tách file mỗi (phút) | Ổ trống tối thiểu (GB) |
-|---|---:|---:|---:|
-| S01 Mạng nhàn rỗi | 30 | 60 | 1 |
-| S02 Kết nối DHCP/DNS | 15 | 60 | 1 |
-| S03 Duyệt web | 30 | 60 | 2 |
-| S04 Video | 30 | 60 | 12 |
-| S05 Truyền file | 25 | 60 | 3 |
-| S06 Gọi thoại/video | 30 | 60 | 3 |
-| S07 Camera | 30 | 60 | 4 |
-| S08 MQTT (phiên riêng) | 60 | 60 | 1 |
-| S09 Điều khiển | 20 | 60 | 1 |
-| S10 Kết nối lại | 15 | 60 | 1 |
-| S11 Sinh hoạt tổng hợp | 60 | 30 | 25 |
-| S12 Giờ cao điểm | 30 | 10 | 30 |
+| Kịch bản | Thời lượng (phút) | Ổ trống tối thiểu (GB) |
+|---|---:|---:|
+| S01 Mạng nhàn rỗi | 30 | 1 |
+| S02 Kết nối DHCP/DNS | 15 | 1 |
+| S03 Duyệt web | 30 | 2 |
+| S04 Video | 30 | 12 |
+| S05 Truyền file | 25 | 3 |
+| S06 Gọi thoại/video | 30 | 3 |
+| S07 Camera | 30 | 4 |
+| S08 MQTT (phiên riêng) | 60 | 1 |
+| S09 Điều khiển | 20 | 1 |
+| S10 Kết nối lại | 15 | 1 |
+| S11 Sinh hoạt tổng hợp | 60 | 25 |
+| S12 Giờ cao điểm | 30 | 30 |
 
-Khi chạy nhiều kịch bản cùng lúc: tách file theo giá trị **nhỏ nhất**, dung lượng ổ theo giá trị **lớn nhất** trong các kịch bản.
+Mọi kịch bản dùng cùng ngưỡng tách file `--max-file-mb` (mặc định 1000 MB). Nếu lưu lượng của phiên chưa đạt ngưỡng thì có một PCAP; khi một file đạt ngưỡng, `dumpcap` mở file mới và tiếp tục thu. **Không thể biết trước số file chỉ từ thời lượng kịch bản**; script in số thực tế sau khi thu và ghi một dòng `metadata.csv` cho mỗi file. S08 chạy nền trong phiên khác không tạo thêm PCAP riêng; các kịch bản chạy chồng dùng chung PCAP của một phiên. Khi chạy chồng, dung lượng ổ yêu cầu lấy giá trị lớn nhất trong các kịch bản. Ngưỡng file không giới hạn tổng dung lượng phiên thu. Muốn có dữ liệu đa dạng, phải chạy lại kịch bản thành nhiều phiên độc lập trên nhiều ngày và điều kiện khác nhau.
 
 ---
 
@@ -197,6 +201,7 @@ data/
 ├── metadata.csv                         # mỗi file PCAP một dòng
 ├── pcap/
 │   ├── SES001_20261012_090000.pcap
+│   ├── SES001_20261012_090000_00002.pcap  # nếu hai file được tách trong cùng một giây
 │   └── SES002_20261012_100500.pcap
 └── logs/
     ├── SES001_tcpdump.log               # log tcpdump trên router (có số gói bị bỏ sót)

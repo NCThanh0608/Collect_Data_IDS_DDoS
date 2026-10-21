@@ -7,12 +7,12 @@ Các bước:
   1. Kiểm tra trước khi thu: công cụ, SSH tới router, flow offloading, Mosquitto, tcpdump,
      lệch đồng hồ, dung lượng ổ, khung giờ 07:00–18:00.
   2. Thu: ssh vào router chạy tcpdump trên br-lan (loại SSH của CAPTURE-SERVER), dữ liệu đẩy về
-     dumpcap trên máy này, tự tách file theo thời gian, tự dừng khi hết thời lượng.
+     dumpcap trên máy này, tự tách file khi đạt ngưỡng dung lượng, tự dừng khi hết thời lượng.
   3. Đổi tên file theo quy ước, đọc số liệu bằng capinfos, ghi metadata.csv.
   4. Chạy các bộ lọc nghiệm thu bằng tshark, in và lưu báo cáo PASS/FAIL.
 
 Ví dụ:
-  python tools/capture_session.py --scenarios S04 --n-user-devices 4 --config Nho
+  python tools/capture_session.py --scenarios S04 --n-user-devices 4 --config small
   python tools/capture_session.py --scenarios S05,S07 --n-user-devices 10 --notes "cuoi tuan"
   python tools/capture_session.py --scenarios S07 --check-only --session-id SES005
 """
@@ -34,20 +34,20 @@ IS_WINDOWS = platform.system() == "Windows"
 # ---------------------------------------------------------------------------
 # Cấu hình theo kịch bản
 # ---------------------------------------------------------------------------
-# minutes: thời lượng mặc định; split_min: tách file mỗi N phút; disk_gb: dung lượng trống tối thiểu
+# minutes: thời lượng mặc định; disk_gb: dung lượng trống tối thiểu
 SCENARIOS = {
-    "S01": {"name": "Idle network",       "minutes": 30, "split_min": 60, "disk_gb": 1},
-    "S02": {"name": "Device onboarding",  "minutes": 15, "split_min": 60, "disk_gb": 1},
-    "S03": {"name": "Web browsing",       "minutes": 30, "split_min": 60, "disk_gb": 2},
-    "S04": {"name": "Video streaming",    "minutes": 30, "split_min": 60, "disk_gb": 12},
-    "S05": {"name": "File transfer",      "minutes": 25, "split_min": 60, "disk_gb": 3},
-    "S06": {"name": "Voice/video call",   "minutes": 30, "split_min": 60, "disk_gb": 3},
-    "S07": {"name": "IP camera",          "minutes": 30, "split_min": 60, "disk_gb": 4},
-    "S08": {"name": "MQTT background",    "minutes": 60, "split_min": 60, "disk_gb": 1},
-    "S09": {"name": "Smart home control", "minutes": 20, "split_min": 60, "disk_gb": 1},
-    "S10": {"name": "Normal reconnect",   "minutes": 15, "split_min": 60, "disk_gb": 1},
-    "S11": {"name": "Mixed household",    "minutes": 60, "split_min": 30, "disk_gb": 25},
-    "S12": {"name": "Peak hour",          "minutes": 30, "split_min": 10, "disk_gb": 30},
+    "S01": {"name": "Idle network",       "minutes": 30, "disk_gb": 1},
+    "S02": {"name": "Device onboarding",  "minutes": 15, "disk_gb": 1},
+    "S03": {"name": "Web browsing",       "minutes": 30, "disk_gb": 2},
+    "S04": {"name": "Video streaming",    "minutes": 30, "disk_gb": 12},
+    "S05": {"name": "File transfer",      "minutes": 25, "disk_gb": 3},
+    "S06": {"name": "Voice/video call",   "minutes": 30, "disk_gb": 3},
+    "S07": {"name": "IP camera",          "minutes": 30, "disk_gb": 4},
+    "S08": {"name": "MQTT background",    "minutes": 60, "disk_gb": 1},
+    "S09": {"name": "Smart home control", "minutes": 20, "disk_gb": 1},
+    "S10": {"name": "Normal reconnect",   "minutes": 15, "disk_gb": 1},
+    "S11": {"name": "Mixed household",    "minutes": 60, "disk_gb": 25},
+    "S12": {"name": "Peak hour",          "minutes": 30, "disk_gb": 30},
 }
 
 CAMS = "192.168.1.30 192.168.1.31 192.168.1.32"
@@ -277,7 +277,7 @@ def precheck(args, tools, duration_min, disk_gb):
         sys.exit(f"\nCó {problems} lỗi kiểm tra trước khi thu. Sửa lỗi hoặc chạy lại với --force.")
 
 
-def capture(args, tools, session_id, duration_min, split_min, pcap_dir, tcpdump_log):
+def capture(args, tools, session_id, duration_min, pcap_dir, tcpdump_log):
     step("Thu PCAP")
     duration_s = duration_min * 60
     bpf = f"not (host {args.capture_server_ip} and port 22)"
@@ -286,7 +286,8 @@ def capture(args, tools, session_id, duration_min, split_min, pcap_dir, tcpdump_
     ssh_cmd[ssh_cmd.index("ConnectTimeout=5")] = "ServerAliveInterval=15"
     ssh_cmd.append(remote)
     dumpcap_cmd = [tools["dumpcap"], "-q", "-i", "-", "-F", "pcap",
-                   "-b", f"duration:{split_min * 60}", "-w", str(pcap_dir / f"{session_id}.pcap")]
+                   "-b", f"filesize:{args.max_file_mb * 1000}",
+                   "-w", str(pcap_dir / f"{session_id}.pcap")]
 
     start = dt.datetime.now()
     print(f"Bắt đầu {start:%H:%M:%S}, tự dừng lúc {start + dt.timedelta(seconds=duration_s):%H:%M:%S}. "
@@ -309,11 +310,16 @@ def capture(args, tools, session_id, duration_min, split_min, pcap_dir, tcpdump_
             args.notes = "; ".join(x for x in (args.notes, "dung som bang Ctrl+C") if x)
     print(f"Kết thúc {dt.datetime.now():%H:%M:%S}")
 
-    # Đổi tên: SES001_00001_20261012145800.pcap -> SES001_20261012_145800.pcap
-    for f in pcap_dir.glob(f"{session_id}_*.pcap"):
-        m = re.fullmatch(rf"({session_id})_\d{{5}}_(\d{{8}})(\d{{6}})\.pcap", f.name)
+    # Cùng một giây có thể tạo nhiều file nếu chạm ngưỡng dung lượng.
+    for f in sorted(pcap_dir.glob(f"{session_id}_*.pcap")):
+        m = re.fullmatch(rf"({session_id})_(\d{{5}})_(\d{{8}})(\d{{6}})\.pcap", f.name)
         if m:
-            f.rename(f.with_name(f"{m.group(1)}_{m.group(2)}_{m.group(3)}.pcap"))
+            target = f.with_name(f"{m.group(1)}_{m.group(3)}_{m.group(4)}.pcap")
+            if target.exists():
+                target = f.with_name(f"{m.group(1)}_{m.group(3)}_{m.group(4)}_{m.group(2)}.pcap")
+            if target.exists():
+                raise FileExistsError(f"Tên PCAP đã tồn tại, không ghi đè: {target}")
+            f.rename(target)
 
 
 def main():
@@ -321,8 +327,11 @@ def main():
     p.add_argument("--scenarios", required=True, nargs="+",
                    help="Một hoặc nhiều kịch bản, ví dụ: S04  hoặc  S05,S07  (S08 luôn được thêm)")
     p.add_argument("--n-user-devices", type=int, default=0, help="Số thiết bị người dùng đang kết nối")
-    p.add_argument("--config", choices=["Nho", "Lon"], default="Lon")
+    p.add_argument("--config", type=str.lower, choices=["small", "large"], default="large",
+                   help="Quy mô thiết bị: small (Nhỏ) hoặc large (Lớn)")
     p.add_argument("--duration-min", type=int, default=0, help="0 = dùng thời lượng mặc định của kịch bản")
+    p.add_argument("--max-file-mb", type=int, default=1000,
+                   help="Tách PCAP khi đạt dung lượng này (MB, mặc định: 1000)")
     p.add_argument("--notes", default="")
     p.add_argument("--router-ip", default="192.168.1.1")
     p.add_argument("--router-user", default="root")
@@ -347,13 +356,14 @@ def main():
     if "S08" not in scenarios:
         scenarios.append("S08")
     main_sc = next((s for s in scenarios if s != "S08"), "S08")
-    if "S12" in scenarios and args.config != "Lon":
-        sys.exit("S12 chỉ chạy với cấu hình Lon.")
+    if "S12" in scenarios and args.config != "large":
+        sys.exit("S12 chỉ chạy với --config large.")
     if args.check_only and not args.session_id:
         sys.exit("--check-only cần kèm --session-id")
+    if args.max_file_mb < 1:
+        sys.exit("--max-file-mb phải >= 1")
 
     duration_min = args.duration_min or SCENARIOS[main_sc]["minutes"]
-    split_min = min(SCENARIOS[s]["split_min"] for s in scenarios)
     disk_gb = max(SCENARIOS[s]["disk_gb"] for s in scenarios)
     active = ";".join([main_sc] + sorted(s for s in scenarios if s != main_sc))
 
@@ -367,13 +377,13 @@ def main():
     session_id = args.session_id or next_session_id(meta_path)
     tcpdump_log = log_dir / f"{session_id}_tcpdump.log"
     print(f"Phiên: {session_id} | Kịch bản: {active} | Thời lượng: {duration_min} phút | "
-          f"Tách file: {split_min} phút | Cấu hình: {args.config}")
+          f"Tách file khi đạt {args.max_file_mb} MB | Cấu hình: {args.config}")
     print(f"Chi tiết kịch bản: scenarios/{main_sc}_*.md")
 
     # 1–2. Kiểm tra và thu
     if not args.check_only:
         precheck(args, tools, duration_min, disk_gb)
-        capture(args, tools, session_id, duration_min, split_min, pcap_dir, tcpdump_log)
+        capture(args, tools, session_id, duration_min, pcap_dir, tcpdump_log)
     elif not (tools["capinfos"] and tools["tshark"]):
         sys.exit("Không tìm thấy capinfos/tshark (cài Wireshark CLI hoặc dùng --wireshark-dir)")
 
@@ -394,6 +404,7 @@ def main():
         packets, duration, first, last = capinfos_stats(tools["capinfos"], f)
         stats.append((f, packets, duration, first, last))
         print(f"  {f.name}: {packets} gói, {duration:,.0f} s")
+    print(f"  Tổng PCAP của phiên {session_id}: {len(files)} file")
     total_packets = sum(s[1] for s in stats)
     total_duration = sum(s[2] for s in stats)
     drop_pct = (100.0 * kernel_dropped / (kernel_dropped + total_packets)
