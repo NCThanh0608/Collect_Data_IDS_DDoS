@@ -14,9 +14,9 @@
                               INTERNET
                                   |
                                 (WAN)
-                 ROUTER OpenWrt  192.168.10.1
+                 ROUTER OpenWrt  192.168.1.1
                  [DHCP/DNS/NTP] [Mosquitto :1883]
-                 [tcpdump br-lan] <----SSH---- CAPTURE-SERVER 192.168.10.60 (LAN port)
+                 [tcpdump br-lan] <----SSH---- CAPTURE-SERVER 192.168.1.60 (LAN port)
                                   |
                                br-lan
               +-------------------+--------------------+
@@ -36,13 +36,13 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 
 | Device ID | Loại | IP | Mạng | Cấu hình | Hành động trong kịch bản |
 |---|---|---|---|---|---|
-| ROUTER | Router OpenWrt | 192.168.10.1 | — | Cả hai | DHCP, broker (phát LWT), capture |
-| CAPTURE-SERVER | Server capture | 192.168.10.60 | LAN port | Cả hai | Capture |
-| PHONE01 | Smartphone | 192.168.10.14 | SmartHome | Cả hai | Khóa màn hình 2 phút → mở, lặp 2 lần |
-| PHONE02 | Smartphone | 192.168.10.15 | SmartHome | Cả hai | Tắt Wi-Fi 60 giây → bật lại |
-| PHONE03 | Smartphone | 192.168.10.16 | SmartHome | Lớn | Tắt Wi-Fi 60 giây → bật lại (lệch 1 phút so với PHONE02) |
-| IOT03 | Ổ cắm / công tắc | 192.168.10.42 | SmartHome | Cả hai | Rút nguồn **2 phút** (> 1,5 × keepalive để broker phát LWT) → cắm lại |
-| CAM02 | IP camera | 192.168.10.31 | SmartHome | Cả hai | Khởi động lại từ app/web UI (nếu firmware hỗ trợ) hoặc rút nguồn 1 phút |
+| ROUTER | Router OpenWrt | 192.168.1.1 | — | Cả hai | DHCP, broker (phát LWT), capture |
+| CAPTURE-SERVER | Server capture | 192.168.1.60 | LAN port | Cả hai | Capture |
+| PHONE01 | Smartphone | 192.168.1.14 | SmartHome | Cả hai | Khóa màn hình 2 phút → mở, lặp 2 lần |
+| PHONE02 | Smartphone | 192.168.1.15 | SmartHome | Cả hai | Tắt Wi-Fi 60 giây → bật lại |
+| PHONE03 | Smartphone | 192.168.1.16 | SmartHome | Lớn | Tắt Wi-Fi 60 giây → bật lại (lệch 1 phút so với PHONE02) |
+| IOT03 | Ổ cắm / công tắc | 192.168.1.42 | SmartHome | Cả hai | Rút nguồn **2 phút** (> 1,5 × keepalive để broker phát LWT) → cắm lại |
+| CAM02 | IP camera | 192.168.1.31 | SmartHome | Cả hai | Khởi động lại từ app/web UI (nếu firmware hỗ trợ) hoặc rút nguồn 1 phút |
 | Còn lại | — | — | — | Cả hai | Nền |
 
 > Chỉ thực hiện mức gián đoạn của sinh hoạt bình thường. **Không** tắt/bật liên tục với tần suất cao, không gây mất kết nối cho thiết bị khác.
@@ -96,10 +96,10 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 |---|---|---|---|
 | 1 | PCAP ≥ 14 phút, không rỗng, drop < 0,1% | `capinfos`, số liệu tcpdump | [ ] |
 | 2 | Không có traffic SSH của CAPTURE-SERVER | `tcp.port == 22` → 0 gói | [ ] |
-| 3 | PHONE01: thấy traffic giảm khi khóa màn hình và tăng (push/sync) khi mở | I/O Graph `ip.addr == 192.168.10.14` | [ ] |
+| 3 | PHONE01: thấy traffic giảm khi khóa màn hình và tăng (push/sync) khi mở | I/O Graph `ip.addr == 192.168.1.14` | [ ] |
 | 4 | PHONE02 (PHONE03): có DHCP Request/ACK sau khi bật Wi-Fi | `dhcp && eth.addr == <MAC>` | [ ] |
 | 5 | Broker phát LWT `offline` cho IOT03 khoảng 90 giây sau khi rút nguồn | `mqtt.topic == "smarthome/iot03/status"` | [ ] |
-| 6 | IOT03 có DHCP, MQTT CONNECT và `online` sau khi cắm lại | `ip.addr == 192.168.10.42 && (dhcp \|\| mqtt.msgtype == 1)` | [ ] |
-| 7 | CAM02 có khoảng im lặng rồi xuất hiện lại (DHCP/DNS/kết nối cloud) | I/O Graph `ip.addr == 192.168.10.31` | [ ] |
+| 6 | IOT03 có DHCP, MQTT CONNECT và `online` sau khi cắm lại | `ip.addr == 192.168.1.42 && (dhcp \|\| mqtt.msgtype == 1)` | [ ] |
+| 7 | CAM02 có khoảng im lặng rồi xuất hiện lại (DHCP/DNS/kết nối cloud) | I/O Graph `ip.addr == 192.168.1.31` | [ ] |
 | 8 | Thời gian các sự kiện khớp nhật ký (sai lệch ≤ 5 giây) | So sánh nhật ký | [ ] |
 | 9 | Dòng `metadata.csv` và nhật ký thời gian đầy đủ | Mở file | [ ] |

@@ -14,9 +14,9 @@
                               INTERNET
                                   |
                                 (WAN)
-                 ROUTER OpenWrt  192.168.10.1
+                 ROUTER OpenWrt  192.168.1.1
                  [DHCP/DNS/NTP] [Mosquitto :1883]
-                 [tcpdump br-lan] <----SSH---- CAPTURE-SERVER 192.168.10.60 (LAN port)
+                 [tcpdump br-lan] <----SSH---- CAPTURE-SERVER 192.168.1.60 (LAN port)
                                   |
                                br-lan
               +-------------------+--------------------+
@@ -38,12 +38,12 @@ Thứ tự kết nối: **IoT → Camera → Thiết bị người dùng**, mỗ
 
 | Device ID | Loại | IP (static lease) | Mạng | Cấu hình | Hành động trong kịch bản |
 |---|---|---|---|---|---|
-| ROUTER | Router OpenWrt | 192.168.10.1 | — | Cả hai | Cấp DHCP, DNS, broker; **không reboot** |
-| CAPTURE-SERVER | Server capture | 192.168.10.60 | LAN port | Cả hai | Capture, bắt đầu **trước** khi thiết bị kết nối |
-| IOT01–IOT03 | IoT MQTT | 192.168.10.40–42 | SmartHome | Cả hai | Tắt nguồn trước phiên, cấp nguồn lại lần lượt |
-| CAM01–CAM03 | IP camera | 192.168.10.30–32 | SmartHome | Cả hai | Tắt nguồn trước phiên, cấp nguồn lại lần lượt |
-| LAPTOP01–LAPTOP04 | Laptop | 192.168.10.10–13 | SmartHome | LAPTOP03–LAPTOP04: Lớn | Tắt Wi-Fi (hoặc rút cáp mạng) trước phiên; khởi động lại hoặc bật Wi-Fi khi đến lượt |
-| PHONE01–PHONE06 | Smartphone | 192.168.10.14–19 | SmartHome | PHONE03–06: Lớn | Tắt Wi-Fi trước phiên, bật lại |
+| ROUTER | Router OpenWrt | 192.168.1.1 | — | Cả hai | Cấp DHCP, DNS, broker; **không reboot** |
+| CAPTURE-SERVER | Server capture | 192.168.1.60 | LAN port | Cả hai | Capture, bắt đầu **trước** khi thiết bị kết nối |
+| IOT01–IOT03 | IoT MQTT | 192.168.1.40–42 | SmartHome | Cả hai | Tắt nguồn trước phiên, cấp nguồn lại lần lượt |
+| CAM01–CAM03 | IP camera | 192.168.1.30–32 | SmartHome | Cả hai | Tắt nguồn trước phiên, cấp nguồn lại lần lượt |
+| LAPTOP01–LAPTOP04 | Laptop | 192.168.1.10–13 | SmartHome | LAPTOP03–LAPTOP04: Lớn | Tắt Wi-Fi (hoặc rút cáp mạng) trước phiên; khởi động lại hoặc bật Wi-Fi khi đến lượt |
+| PHONE01–PHONE06 | Smartphone | 192.168.1.14–19 | SmartHome | PHONE03–06: Lớn | Tắt Wi-Fi trước phiên, bật lại |
 
 > Thiết bị quay lại mạng với lease còn hạn thường chỉ gửi DHCP **Request/ACK**. Để có đủ chuỗi **Discover/Offer/Request/ACK**, chọn "Quên mạng" (forget network) trên 1–2 smartphone rồi kết nối lại. Ghi rõ thiết bị nào đã làm việc này vào `notes`.
 

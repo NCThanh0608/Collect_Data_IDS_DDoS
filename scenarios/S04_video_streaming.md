@@ -14,9 +14,9 @@
                               INTERNET  (YouTube, Netflix, TikTok, FPT Play...)
                                   |
                                 (WAN)
-                 ROUTER OpenWrt  192.168.10.1
+                 ROUTER OpenWrt  192.168.1.1
                  [DHCP/DNS/NTP] [Mosquitto :1883]
-                 [tcpdump br-lan] <----SSH---- CAPTURE-SERVER 192.168.10.60 (LAN port)
+                 [tcpdump br-lan] <----SSH---- CAPTURE-SERVER 192.168.1.60 (LAN port)
                                   |
                                br-lan
               +-------------------+--------------------+
@@ -36,16 +36,16 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 
 | Device ID | Loại | IP | Mạng | Cấu hình | Hoạt động trong kịch bản |
 |---|---|---|---|---|---|
-| ROUTER | Router OpenWrt | 192.168.10.1 | — | Cả hai | Gateway, capture |
-| CAPTURE-SERVER | Server capture | 192.168.10.60 | LAN port | Cả hai | Capture |
-| LAPTOP01 | Laptop | 192.168.10.10 | SmartHome | Cả hai | YouTube trên trình duyệt, chất lượng 1080p, seek và pause |
-| LAPTOP02 | Laptop | 192.168.10.11 | SmartHome | Cả hai | Xem phim dài (Netflix/FPT Play/VieON), đổi tập |
-| PHONE01 | Smartphone | 192.168.10.14 | SmartHome | Cả hai | Video ngắn (TikTok/Facebook Reels), vuốt liên tục |
-| LAPTOP03 | Laptop | 192.168.10.12 | SmartHome | Lớn | YouTube chất lượng Auto/4K nếu màn hình hỗ trợ |
-| PHONE03 | Smartphone | 192.168.10.16 | SmartHome | Lớn | App YouTube, đổi chất lượng 360p ↔ 1080p |
+| ROUTER | Router OpenWrt | 192.168.1.1 | — | Cả hai | Gateway, capture |
+| CAPTURE-SERVER | Server capture | 192.168.1.60 | LAN port | Cả hai | Capture |
+| LAPTOP01 | Laptop | 192.168.1.10 | SmartHome | Cả hai | YouTube trên trình duyệt, chất lượng 1080p, seek và pause |
+| LAPTOP02 | Laptop | 192.168.1.11 | SmartHome | Cả hai | Xem phim dài (Netflix/FPT Play/VieON), đổi tập |
+| PHONE01 | Smartphone | 192.168.1.14 | SmartHome | Cả hai | Video ngắn (TikTok/Facebook Reels), vuốt liên tục |
+| LAPTOP03 | Laptop | 192.168.1.12 | SmartHome | Lớn | YouTube chất lượng Auto/4K nếu màn hình hỗ trợ |
+| PHONE03 | Smartphone | 192.168.1.16 | SmartHome | Lớn | App YouTube, đổi chất lượng 360p ↔ 1080p |
 | Còn lại | — | — | SmartHome | Cả hai | Để chờ |
-| CAM01–CAM03 | IP camera | 192.168.10.30–32 | SmartHome | Cả hai | Nền |
-| IOT01–IOT03 | IoT MQTT | 192.168.10.40–42 | SmartHome | Cả hai | S08 |
+| CAM01–CAM03 | IP camera | 192.168.1.30–32 | SmartHome | Cả hai | Nền |
+| IOT01–IOT03 | IoT MQTT | 192.168.1.40–42 | SmartHome | Cả hai | S08 |
 
 ## 3. Thời gian thu
 
@@ -96,7 +96,7 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 | 2 | Không có traffic SSH của CAPTURE-SERVER | `tcp.port == 22` → 0 gói | [ ] |
 | 3 | Mỗi thiết bị chủ động có downlink kéo dài ≥ 5 phút | Statistics → I/O Graph, lọc `ip.dst == <IP>` | [ ] |
 | 4 | Có luồng QUIC/TLS tới CDN video (ví dụ `googlevideo.com`) | `tls.handshake.extensions_server_name contains "video"` hoặc `quic` | [ ] |
-| 5 | Thấy khoảng giảm traffic khi LAPTOP01 pause (phút 08–10) | I/O Graph `ip.addr == 192.168.10.10` | [ ] |
+| 5 | Thấy khoảng giảm traffic khi LAPTOP01 pause (phút 08–10) | I/O Graph `ip.addr == 192.168.1.10` | [ ] |
 | 6 | Thấy thay đổi throughput khi đổi chất lượng (phút 18–22) | I/O Graph | [ ] |
 | 7 | MQTT nền vẫn đều đặn, không bị gián đoạn khi tải cao | `mqtt.msgtype == 3` | [ ] |
 | 8 | CPU router không vượt 90% kéo dài | Nhật ký `top` | [ ] |

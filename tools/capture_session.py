@@ -50,17 +50,17 @@ SCENARIOS = {
     "S12": {"name": "Peak hour",          "minutes": 30, "split_min": 10, "disk_gb": 30},
 }
 
-CAMS = "192.168.10.30 192.168.10.31 192.168.10.32"
-USERS = " ".join(f"192.168.10.{i}" for i in range(10, 20))
+CAMS = "192.168.1.30 192.168.1.31 192.168.1.32"
+USERS = " ".join(f"192.168.1.{i}" for i in range(10, 20))
 
 # Bộ lọc nghiệm thu: (tên, display filter, kỳ vọng "zero" = phải bằng 0 | "nonzero" = phải > 0)
 COMMON_CHECKS = [
     ("Không có SSH của CAPTURE-SERVER", "tcp.port == 22", "zero"),
     ("Có DNS", "dns", "nonzero"),
     ("MQTT publish (S08)", "mqtt.msgtype == 3", "nonzero"),
-    ("IOT01 xuất hiện", "ip.addr == 192.168.10.40", "nonzero"),
-    ("IOT02 xuất hiện", "ip.addr == 192.168.10.41", "nonzero"),
-    ("IOT03 xuất hiện", "ip.addr == 192.168.10.42", "nonzero"),
+    ("IOT01 xuất hiện", "ip.addr == 192.168.1.40", "nonzero"),
+    ("IOT02 xuất hiện", "ip.addr == 192.168.1.41", "nonzero"),
+    ("IOT03 xuất hiện", "ip.addr == 192.168.1.42", "nonzero"),
 ]
 SCENARIO_CHECKS = {
     "S01": [("Có NTP", "ntp", "nonzero")],
@@ -74,9 +74,9 @@ SCENARIO_CHECKS = {
     "S05": [("TLS", "tls", "nonzero")],
     "S06": [("STUN/TURN", "stun || udp.port == 3478 || udp.port == 19302", "nonzero")],
     # SSID chung: luồng camera <-> viewer Wi-Fi trong LAN không đi qua br-lan, nên không kiểm tra
-    "S07": [("CAM01 xuất hiện", "ip.addr == 192.168.10.30", "nonzero"),
-            ("CAM02 xuất hiện", "ip.addr == 192.168.10.31", "nonzero"),
-            ("CAM03 xuất hiện", "ip.addr == 192.168.10.32", "nonzero")],
+    "S07": [("CAM01 xuất hiện", "ip.addr == 192.168.1.30", "nonzero"),
+            ("CAM02 xuất hiện", "ip.addr == 192.168.1.31", "nonzero"),
+            ("CAM03 xuất hiện", "ip.addr == 192.168.1.32", "nonzero")],
     "S08": [("PUBACK (QoS 1)", "mqtt.msgtype == 4", "nonzero")],
     "S09": [("Lệnh /cmd", 'mqtt.topic contains "/cmd"', "nonzero"),
             ("Phản hồi IOT03", 'mqtt.topic contains "iot03"', "nonzero")],
@@ -324,9 +324,9 @@ def main():
     p.add_argument("--config", choices=["Nho", "Lon"], default="Lon")
     p.add_argument("--duration-min", type=int, default=0, help="0 = dùng thời lượng mặc định của kịch bản")
     p.add_argument("--notes", default="")
-    p.add_argument("--router-ip", default="192.168.10.1")
+    p.add_argument("--router-ip", default="192.168.1.1")
     p.add_argument("--router-user", default="root")
-    p.add_argument("--capture-server-ip", default="192.168.10.60")
+    p.add_argument("--capture-server-ip", default="192.168.1.60")
     p.add_argument("--interface", default="br-lan")
     p.add_argument("--out-dir", default=str(Path(__file__).resolve().parent.parent / "data"))
     p.add_argument("--wireshark-dir", default="", help="Thư mục chứa dumpcap/tshark/capinfos nếu không nằm trong PATH")

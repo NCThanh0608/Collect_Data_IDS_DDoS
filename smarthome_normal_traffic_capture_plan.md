@@ -34,7 +34,6 @@ Có thể dùng các mức trung gian 6 hoặc 8 thiết bị người dùng, nh
 ### 1.3. Nguyên tắc thu
 
 - Chỉ thực hiện các hoạt động sử dụng mạng hợp lệ trong Smart Home; **không mô phỏng tấn công** trong các phiên này.
-- Không tạo trường `label`, `class`, `attack_type` hoặc gán `Benign` cho từng bản ghi.
 - Giữ lại **PCAP gốc**
 - Thu các trạng thái **nhàn rỗi, sử dụng ít, sử dụng vừa, tải cao hợp lệ**, cùng tình huống nhiều thiết bị hoạt động đồng thời.
 - **Khung giờ thu: chỉ ban ngày, 07:00–18:00.** Không thu buổi tối và ban đêm. Để bù lại, nên trải các phiên đều trong khung giờ (sáng, trưa, chiều) và trên nhiều ngày khác nhau. Dataset chỉ đại diện cho traffic ban ngày (xem [generalization_assessment.md](generalization_assessment.md)).
@@ -62,13 +61,13 @@ Ghi các điều kiện lab của mỗi đợt thu (đường WAN, kênh Wi-Fi, 
 
 ### 2.1. Topology
 
-Tất cả thiết bị nằm trong **một subnet `192.168.10.0/24`** trên bridge `br-lan` của OpenWrt. Tất cả thiết bị Wi-Fi (người dùng, camera, IoT) dùng **chung một SSID "SmartHome"**, được bridge vào `br-lan`.
+Tất cả thiết bị nằm trong **một subnet `192.168.1.0/24`** trên bridge `br-lan` của OpenWrt. Tất cả thiết bị Wi-Fi (người dùng, camera, IoT) dùng **chung một SSID "SmartHome"**, được bridge vào `br-lan`.
 
 ```text
                           INTERNET
                               |
                             (WAN)
-                     ROUTER OpenWrt 192.168.10.1
+                     ROUTER OpenWrt 192.168.1.1
                      - DHCP/DNS, NTP
                      - Mosquitto broker :1883
                      - tcpdump trên br-lan
@@ -78,55 +77,26 @@ Tất cả thiết bị nằm trong **một subnet `192.168.10.0/24`** trên bri
           |                                           |                 |
    SSID "SmartHome" (chung cho mọi thiết bị Wi-Fi)                  LAN port
    4–10 Laptop/Phone     CAM01 CAM02 CAM03                    Server capture
-   192.168.10.10–19      IOT01 IOT02 IOT03                    192.168.10.60
-                         192.168.10.30–42
+   192.168.1.10–19       IOT01 IOT02 IOT03                    192.168.1.60
+                         192.168.1.30–42
 ```
-
-- Nếu không thể chạy broker trên router, đặt broker ở máy riêng `192.168.10.50` và **cắm dây** vào cổng LAN. Như vậy luồng IoT (Wi-Fi) → broker (dây) vẫn đi qua bridge.
-
-> **Hệ quả của SSID chung:** unicast giữa **hai thiết bị Wi-Fi** (ví dụ điện thoại xem camera qua LAN, laptop truy cập web UI camera, điện thoại gửi file cho laptop) được driver Wi-Fi chuyển thẳng và **không xuất hiện trên `br-lan`**. Dataset vẫn có đủ traffic thiết bị ↔ Internet, thiết bị ↔ router (DNS, DHCP, MQTT) và broadcast/multicast trong LAN (ARP, mDNS, SSDP).
->
-> Nếu cần thu luồng camera ↔ người xem trong LAN, có thể **cắm dây camera vào cổng LAN của router**: luồng Wi-Fi ↔ cổng dây phải đi qua bridge nên thu được. Ghi rõ cách kết nối của từng camera vào `devices.csv`.
-
-### 2.2. Điều kiện để traffic hiện trên `br-lan`
-
-Capture trên `br-lan` thấy được: traffic client ↔ Internet (trước NAT, còn nguyên IP nội bộ), traffic client ↔ router (DNS, DHCP, MQTT broker trên router) và traffic giữa các cổng của bridge mà CPU xử lý. Các trường hợp sau **không** hiện trên `br-lan` và cần xử lý:
-
-| Trường hợp                                         | Nguyên nhân                                                                                   | Cách xử lý                                                                                          |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Hai thiết bị Wi-Fi nói chuyện với nhau (cùng SSID) | Driver Wi-Fi (mac80211) chuyển gói nội bộ trong BSS, không qua bridge                         | **Chấp nhận** (đã chọn dùng một SSID); broker đặt trên router; camera cần thu luồng LAN thì cắm dây |
-| Hai thiết bị cắm dây cùng switch chip              | Switch chip chuyển mạch phần cứng                                                             | Hạn chế thiết bị có dây; thiết bị có dây chỉ nói chuyện với Internet/router                         |
-| Flow offloading bật                                | Gói của kết nối đã thiết lập bỏ qua đường xử lý thông thường, có thể không thấy trong capture | **Tắt** software và hardware flow offloading                                                        |
-| Traffic do chính router tạo ra ra WAN              | Không đi qua `br-lan`                                                                         | Không thuộc phạm vi thu (chấp nhận)                                                                 |
-
-
-Tắt flow offloading:
-
-```sh
-uci set firewall.@defaults[0].flow_offloading='0'
-uci set firewall.@defaults[0].flow_offloading_hw='0'
-uci commit firewall
-/etc/init.d/firewall restart
-```
-
-Firewall: chỉ cho phép các luồng cần thiết (client → Internet, client → router: DNS, DHCP, MQTT); không mở truy cập ngoài ý muốn. Traffic giữa các thiết bị cùng SSID không đi qua firewall của router.
 
 ### 2.3. Kế hoạch IP mẫu
 
 | Thiết bị             | Địa chỉ mẫu        | Mạng kết nối        | Vai trò                          |
 | -------------------- | ------------------ | ------------------- | -------------------------------- |
-| Router               | `192.168.10.1`     | —                   | Gateway, DHCP/DNS, broker, capture |
-| Laptop/Smartphone | `192.168.10.10–19` | SSID "SmartHome"    | Người dùng: 4–10 thiết bị        |
-| Camera 01–03         | `192.168.10.30–32` | SSID "SmartHome" (hoặc cổng LAN) | TCP/HTTP(S)                      |
-| MQTT IoT 01–03       | `192.168.10.40–42` | SSID "SmartHome"     | Telemetry và nhận lệnh           |
-| Broker riêng (tùy chọn) | `192.168.10.50` | Cổng LAN có dây    | Chỉ dùng nếu không chạy broker trên router |
-| Server capture       | `192.168.10.60`    | Cổng LAN có dây     | SSH vào router, lưu PCAP         |
+| Router               | `192.168.1.1`     | —                   | Gateway, DHCP/DNS, broker, capture |
+| Laptop/Smartphone | `192.168.1.10–19` | SSID "SmartHome"    | Người dùng: 4–10 thiết bị        |
+| Camera 01–03         | `192.168.1.30–32` | SSID "SmartHome" (hoặc cổng LAN) | TCP/HTTP(S)                      |
+| MQTT IoT 01–03       | `192.168.1.40–42` | SSID "SmartHome"     | Telemetry và nhận lệnh           |
+| Broker riêng (tùy chọn) | `192.168.1.50` | Cổng LAN có dây    | Chỉ dùng nếu không chạy broker trên router |
+| Server capture       | `192.168.1.60`    | Cổng LAN có dây     | SSH vào router, lưu PCAP         |
 
 **Mã thiết bị chuẩn** (dùng thống nhất trong mọi file kịch bản):
 
 | Device ID | Loại | IP | Mạng | Cấu hình Nhỏ | Cấu hình Lớn |
 |---|---|---|---|:---:|:---:|
-| ROUTER | Router OpenWrt | 192.168.10.1 | — | ✔ | ✔ |
+| ROUTER | Router OpenWrt | 192.168.1.1 | — | ✔ | ✔ |
 | LAPTOP01 – LAPTOP04 | Laptop | .10 – .13 | SmartHome | LAPTOP01, LAPTOP02 | ✔ |
 | PHONE01 – PHONE06 | Smartphone | .14 – .19 | SmartHome | PHONE01, PHONE02 | ✔ |
 | CAM01 – CAM03 | IP camera | .30 – .32 | SmartHome | ✔ | ✔ |
@@ -187,7 +157,7 @@ Quy ước topic: `smarthome/<device_id>/<message_type>`, chữ thường, khôn
 
 | Tham số                    | Giá trị mẫu                                                 |
 | -------------------------- | ----------------------------------------------------------- |
-| Broker                     | `192.168.10.1:1883` (hoặc `8883` nếu dùng TLS)              |
+| Broker                     | `192.168.1.1:1883` (hoặc `8883` nếu dùng TLS)              |
 | Keepalive                  | 60 giây                                                     |
 | QoS telemetry / sự kiện    | 0 / 1                                                       |
 | QoS lệnh điều khiển và ACK | 1                                                           |
@@ -248,16 +218,16 @@ Quy ước topic: `smarthome/<device_id>/<message_type>`, chữ thường, khôn
 
 ### 5.2. Capture
 
-Server capture (`192.168.10.60`) SSH vào router và nhận luồng capture từ **`br-lan`**. **Loại bỏ traffic SSH** giữa server và router bằng capture filter để không gây nhiễu dữ liệu.
+Server capture (`192.168.1.60`) SSH vào router và nhận luồng capture từ **`br-lan`**. **Loại bỏ traffic SSH** giữa server và router bằng capture filter để không gây nhiễu dữ liệu.
 
 **Cách A – Wireshark SSH remote capture (sshdump):**
 
 | Trường | Giá trị |
 |---|---|
-| Remote SSH server | `192.168.10.1`, port `22`, user `root` (dùng SSH key) |
+| Remote SSH server | `192.168.1.1`, port `22`, user `root` (dùng SSH key) |
 | Remote interface | `br-lan` |
 | Remote capture command | để trống (dùng tcpdump mặc định) |
-| Remote capture filter | `not (host 192.168.10.60 and port 22)` |
+| Remote capture filter | `not (host 192.168.1.60 and port 22)` |
 | Snaplen | `0` (lấy đủ gói) |
 
 Lưu output dưới dạng `.pcap` hoặc `.pcapng` theo quy ước đặt tên ở mục 6.
@@ -265,8 +235,8 @@ Lưu output dưới dạng `.pcap` hoặc `.pcapng` theo quy ước đặt tên 
 **Cách B – SSH + tcpdump, ghi xoay vòng trên server (khuyến nghị cho phiên dài/S11, S12):**
 
 ```sh
-ssh root@192.168.10.1 \
-  "tcpdump -i br-lan -s 0 -U -w - 'not (host 192.168.10.60 and port 22)'" \
+ssh root@192.168.1.1 \
+  "tcpdump -i br-lan -s 0 -U -w - 'not (host 192.168.1.60 and port 22)'" \
   | tcpdump -r - -w "pcap/<session_id>_%Y%m%d_%H%M%S.pcap" -G 3600
 ```
 
@@ -293,7 +263,8 @@ Script tự thực hiện:
 4. Chạy các bộ lọc nghiệm thu tự động bằng `tshark`, xuất `data/logs/<session_id>_report.csv`. Các tiêu chí cần xem bằng mắt (I/O Graph, đối chiếu nhật ký) vẫn làm theo mục 5 của từng file kịch bản.
 
 > Không lưu PCAP trên flash của router: bộ nhớ trong của OpenWrt rất nhỏ. Mọi PCAP được lưu trên **server capture**.
------------- UPDATE LẠI SAU KHI ĐÃ CHẠY THÀNH CÔNG --------------------------
+
+------------ UPDATE LẠI SAU KHI ĐÃ CHẠY THÀNH CÔNG -------------------------
 ### 5.3. Kiểm tra khi thu
 - Theo dõi CPU/RAM router (`top`, `free`). Nếu CPU thường xuyên > 90% trong S11/S12, giảm số thiết bị hoặc ghi chú trong metadata.
 - `dropped by kernel` = 0 hoặc rất nhỏ (< 0,1% số gói). Phiên có drop lớn phải ghi chú hoặc thu lại.
@@ -332,11 +303,11 @@ SES004,SES004_20261013_134500.pcap,2026-10-13T13:45:00+07:00,2026-10-13T14:14:00
 
 ```csv
 device_id,type,mac,ip,network,notes
-LAPTOP01,Laptop,aa:bb:cc:00:00:01,192.168.10.10,SmartHome,
-PHONE01,Smartphone,aa:bb:cc:00:00:15,192.168.10.14,SmartHome,Random MAC tắt
-CAM01,Camera,aa:bb:cc:00:00:30,192.168.10.30,SmartHome,HTTP snapshot
-IOT01,MQTT,aa:bb:cc:00:00:40,192.168.10.40,SmartHome,Cảm biến môi trường
-CAPTURE-SERVER,Capture,aa:bb:cc:00:00:60,192.168.10.60,LAN port,Bị loại khỏi capture
+LAPTOP01,Laptop,aa:bb:cc:00:00:01,192.168.1.10,SmartHome,
+PHONE01,Smartphone,aa:bb:cc:00:00:15,192.168.1.14,SmartHome,Random MAC tắt
+CAM01,Camera,aa:bb:cc:00:00:30,192.168.1.30,SmartHome,HTTP snapshot
+IOT01,MQTT,aa:bb:cc:00:00:40,192.168.1.40,SmartHome,Cảm biến môi trường
+CAPTURE-SERVER,Capture,aa:bb:cc:00:00:60,192.168.1.60,LAN port,Bị loại khỏi capture
 ```
 
 > Smartphone thường dùng **MAC ngẫu nhiên** theo từng SSID: tắt tính năng này cho SSID "SmartHome", hoặc ghi lại MAC thực tế mà thiết bị dùng.

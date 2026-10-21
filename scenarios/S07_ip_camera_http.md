@@ -14,9 +14,9 @@
                               INTERNET  (cloud của hãng camera, nếu có)
                                   |
                                 (WAN)
-                 ROUTER OpenWrt  192.168.10.1
+                 ROUTER OpenWrt  192.168.1.1
                  [DHCP/DNS/NTP] [Mosquitto :1883]
-                 [tcpdump br-lan] <----SSH---- CAPTURE-SERVER 192.168.10.60 (LAN port)
+                 [tcpdump br-lan] <----SSH---- CAPTURE-SERVER 192.168.1.60 (LAN port)
                                   |
                                br-lan
               +-------------------+--------------------+
@@ -38,16 +38,16 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 
 | Device ID | Loại | IP | Mạng | Cấu hình | Hoạt động trong kịch bản |
 |---|---|---|---|---|---|
-| ROUTER | Router OpenWrt | 192.168.10.1 | — | Cả hai | Gateway, capture |
-| CAPTURE-SERVER | Server capture | 192.168.10.60 | LAN port | Cả hai | Capture |
-| CAM01 | IP camera | 192.168.10.30 | SmartHome | Cả hai | Nền: kiểm tra trạng thái theo app. Chủ động: PHONE01 live view |
-| CAM02 | IP camera | 192.168.10.31 | SmartHome | Cả hai | Nền: HTTP status/snapshot. Chủ động: LAPTOP02 xem snapshot (2–10 giây) hoặc live view |
-| CAM03 | IP camera | 192.168.10.32 | SmartHome | Cả hai | Nền: keepalive/cloud. Chủ động: 2 người xem đồng thời nếu firmware cho phép |
-| PHONE01 | Smartphone | 192.168.10.14 | SmartHome | Cả hai | App của hãng camera hoặc app xem HTTP/MJPEG |
-| LAPTOP02 | Laptop | 192.168.10.11 | SmartHome | Cả hai | Trình duyệt truy cập web UI camera / dashboard |
-| PHONE02 | Smartphone | 192.168.10.15 | SmartHome | Lớn | Viewer thứ hai cho CAM03 |
+| ROUTER | Router OpenWrt | 192.168.1.1 | — | Cả hai | Gateway, capture |
+| CAPTURE-SERVER | Server capture | 192.168.1.60 | LAN port | Cả hai | Capture |
+| CAM01 | IP camera | 192.168.1.30 | SmartHome | Cả hai | Nền: kiểm tra trạng thái theo app. Chủ động: PHONE01 live view |
+| CAM02 | IP camera | 192.168.1.31 | SmartHome | Cả hai | Nền: HTTP status/snapshot. Chủ động: LAPTOP02 xem snapshot (2–10 giây) hoặc live view |
+| CAM03 | IP camera | 192.168.1.32 | SmartHome | Cả hai | Nền: keepalive/cloud. Chủ động: 2 người xem đồng thời nếu firmware cho phép |
+| PHONE01 | Smartphone | 192.168.1.14 | SmartHome | Cả hai | App của hãng camera hoặc app xem HTTP/MJPEG |
+| LAPTOP02 | Laptop | 192.168.1.11 | SmartHome | Cả hai | Trình duyệt truy cập web UI camera / dashboard |
+| PHONE02 | Smartphone | 192.168.1.15 | SmartHome | Lớn | Viewer thứ hai cho CAM03 |
 | Còn lại | — | — | SmartHome | Cả hai | Để chờ |
-| IOT01–IOT03 | IoT MQTT | 192.168.10.40–42 | SmartHome | Cả hai | S08 |
+| IOT01–IOT03 | IoT MQTT | 192.168.1.40–42 | SmartHome | Cả hai | S08 |
 
 **Ghi nhận trước phiên (một lần):** với mỗi camera, ghi vào `devices.csv` (`notes`) giao thức thực tế: `HTTP snapshot` / `MJPEG over HTTP` / `HTTPS` / `Cloud P2P`, cổng sử dụng, có hỗ trợ nhiều viewer không. Chỉ dùng chức năng firmware thực sự hỗ trợ.
 
@@ -80,7 +80,7 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 ### 4.2. Setup device
 - [ ] CAM01–CAM03 bật, kết nối SmartHome, đúng IP; đã ghi giao thức thực tế vào `devices.csv`.
 - [ ] PHONE01/PHONE02 cài và đăng nhập app camera; tắt dữ liệu di động.
-- [ ] LAPTOP02 lưu sẵn URL web UI camera (ví dụ `http://192.168.10.31/`), đã đăng nhập thử.
+- [ ] LAPTOP02 lưu sẵn URL web UI camera (ví dụ `http://192.168.1.31/`), đã đăng nhập thử.
 - [ ] Đóng toàn bộ app/tab xem camera trước khi bắt đầu.
 - [ ] Nếu camera chỉ dùng cloud/P2P: ghi rõ vào `notes`, chấp nhận luồng đi qua Internet.
 
@@ -99,10 +99,10 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 |---|---|---|---|
 | 1 | PCAP ≥ 28 phút, không rỗng, drop < 0,1% | `capinfos`, số liệu tcpdump | [ ] |
 | 2 | Không có traffic SSH của CAPTURE-SERVER | `tcp.port == 22` → 0 gói | [ ] |
-| 3 | Camera cắm dây: thấy luồng camera ↔ viewer trong LAN. Camera Wi-Fi: **không áp dụng** (ghi chú trong `notes`) | `ip.addr == 192.168.10.30 && ip.addr == 192.168.10.14` | [ ] |
-| 4 | Có HTTP request snapshot/stream tới CAM02 với chu kỳ đều | `http.request && ip.dst == 192.168.10.31` | [ ] |
-| 5 | Có ≥ 2 viewer đồng thời với CAM03 (phút 18–26) | Conversations lọc `ip.addr == 192.168.10.32` | [ ] |
-| 6 | Thấy traffic camera giảm về mức nền khi thoát app (phút 26–30) | I/O Graph `ip.src in {192.168.10.30 192.168.10.31 192.168.10.32}` | [ ] |
+| 3 | Camera cắm dây: thấy luồng camera ↔ viewer trong LAN. Camera Wi-Fi: **không áp dụng** (ghi chú trong `notes`) | `ip.addr == 192.168.1.30 && ip.addr == 192.168.1.14` | [ ] |
+| 4 | Có HTTP request snapshot/stream tới CAM02 với chu kỳ đều | `http.request && ip.dst == 192.168.1.31` | [ ] |
+| 5 | Có ≥ 2 viewer đồng thời với CAM03 (phút 18–26) | Conversations lọc `ip.addr == 192.168.1.32` | [ ] |
+| 6 | Thấy traffic camera giảm về mức nền khi thoát app (phút 26–30) | I/O Graph `ip.src in {192.168.1.30 192.168.1.31 192.168.1.32}` | [ ] |
 | 7 | Cả 3 camera đều xuất hiện trong PCAP | Statistics → Endpoints | [ ] |
 | 8 | MQTT nền vẫn đều đặn | `mqtt.msgtype == 3` | [ ] |
 | 9 | Dòng `metadata.csv`, nhật ký và `devices.csv` (giao thức camera) đầy đủ | Mở file | [ ] |

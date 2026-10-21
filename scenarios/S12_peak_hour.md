@@ -14,9 +14,9 @@
                               INTERNET
                                   |
                                 (WAN)  ≥ 100 Mbps khuyến nghị
-                 ROUTER OpenWrt  192.168.10.1
+                 ROUTER OpenWrt  192.168.1.1
                  [DHCP/DNS/NTP] [Mosquitto :1883]
-                 [tcpdump br-lan] <----SSH---- CAPTURE-SERVER 192.168.10.60 (LAN port)
+                 [tcpdump br-lan] <----SSH---- CAPTURE-SERVER 192.168.1.60 (LAN port)
                                   |
                                br-lan
               +-------------------+--------------------+
@@ -41,19 +41,19 @@ Chú thích: ● hoạt động chủ động
 
 | Device ID | Loại | IP | Hoạt động trong kịch bản | Nhóm tải |
 |---|---|---|---|---|
-| LAPTOP01 | Laptop | 192.168.10.10 | YouTube 1080p liên tục | Video |
-| LAPTOP02 | Laptop | 192.168.10.11 | Họp video Meet/Zoom, share màn hình 5 phút | Gọi video |
-| LAPTOP03 | Laptop | 192.168.10.12 | Download file 200 MB × 2 (tuần tự, qua trình duyệt) | Truyền file |
-| LAPTOP04 | Laptop | 192.168.10.13 | Phim trực tuyến 1080p | Video |
-| PHONE01 | Smartphone | 192.168.10.14 | Live view CAM01, đổi sang CAM03 | Camera |
-| PHONE02 | Smartphone | 192.168.10.15 | TikTok/Reels liên tục | Video |
-| PHONE03 | Smartphone | 192.168.10.16 | Backup 100–200 ảnh | Truyền file |
-| PHONE04 | Smartphone | 192.168.10.17 | Gọi video Zalo/Messenger (người nghe ở ngoài) | Gọi video |
-| PHONE05 | Smartphone | 192.168.10.18 | Dashboard MQTT, điều khiển IOT03; duyệt web | Điều khiển + web |
-| PHONE06 | Smartphone | 192.168.10.19 | Upload video ~200 MB lên Google Drive/YouTube | Truyền file |
-| CAM01–CAM03 | IP camera | 192.168.10.30–32 | Có viewer trong phần lớn phiên | Camera |
-| IOT01 | IoT MQTT | 192.168.10.40 | Telemetry chu kỳ **5 giây** (mức cao nhất của S08) | MQTT |
-| IOT02–IOT03 | IoT MQTT | 192.168.10.41–42 | Sự kiện / nhận lệnh | MQTT |
+| LAPTOP01 | Laptop | 192.168.1.10 | YouTube 1080p liên tục | Video |
+| LAPTOP02 | Laptop | 192.168.1.11 | Họp video Meet/Zoom, share màn hình 5 phút | Gọi video |
+| LAPTOP03 | Laptop | 192.168.1.12 | Download file 200 MB × 2 (tuần tự, qua trình duyệt) | Truyền file |
+| LAPTOP04 | Laptop | 192.168.1.13 | Phim trực tuyến 1080p | Video |
+| PHONE01 | Smartphone | 192.168.1.14 | Live view CAM01, đổi sang CAM03 | Camera |
+| PHONE02 | Smartphone | 192.168.1.15 | TikTok/Reels liên tục | Video |
+| PHONE03 | Smartphone | 192.168.1.16 | Backup 100–200 ảnh | Truyền file |
+| PHONE04 | Smartphone | 192.168.1.17 | Gọi video Zalo/Messenger (người nghe ở ngoài) | Gọi video |
+| PHONE05 | Smartphone | 192.168.1.18 | Dashboard MQTT, điều khiển IOT03; duyệt web | Điều khiển + web |
+| PHONE06 | Smartphone | 192.168.1.19 | Upload video ~200 MB lên Google Drive/YouTube | Truyền file |
+| CAM01–CAM03 | IP camera | 192.168.1.30–32 | Có viewer trong phần lớn phiên | Camera |
+| IOT01 | IoT MQTT | 192.168.1.40 | Telemetry chu kỳ **5 giây** (mức cao nhất của S08) | MQTT |
+| IOT02–IOT03 | IoT MQTT | 192.168.1.41–42 | Sự kiện / nhận lệnh | MQTT |
 | ROUTER / CAPTURE-SERVER | Router / Server | .1 / .60 | Gateway / capture | — |
 
 > **Không** dùng công cụ tạo tải nhân tạo (iperf, packet generator, speedtest lặp liên tục, nhiều luồng download song song bằng download manager). Mọi tải phải đến từ ứng dụng người dùng thật.

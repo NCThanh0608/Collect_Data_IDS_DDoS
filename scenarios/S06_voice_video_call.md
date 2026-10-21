@@ -14,9 +14,9 @@
                               INTERNET  (Google Meet, Zoom, Teams, Zalo, Messenger)
                                   |                      \
                                 (WAN)                     \__ Người nghe/nhóm họp
-                 ROUTER OpenWrt  192.168.10.1                  BÊN NGOÀI mạng SmartHome (4G/mạng khác)
+                 ROUTER OpenWrt  192.168.1.1                   BÊN NGOÀI mạng SmartHome (4G/mạng khác)
                  [DHCP/DNS/NTP] [Mosquitto :1883]
-                 [tcpdump br-lan] <----SSH---- CAPTURE-SERVER 192.168.10.60 (LAN port)
+                 [tcpdump br-lan] <----SSH---- CAPTURE-SERVER 192.168.1.60 (LAN port)
                                   |
                                br-lan
               +-------------------+--------------------+
@@ -38,15 +38,15 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 
 | Device ID | Loại | IP | Mạng | Cấu hình | Hoạt động trong kịch bản |
 |---|---|---|---|---|---|
-| ROUTER | Router OpenWrt | 192.168.10.1 | — | Cả hai | Gateway, capture |
-| CAPTURE-SERVER | Server capture | 192.168.10.60 | LAN port | Cả hai | Capture |
-| LAPTOP02 | Laptop | 192.168.10.11 | SmartHome | Cả hai | Google Meet/Zoom/Teams: bật camera, tắt camera, chia sẻ màn hình |
-| PHONE01 | Smartphone | 192.168.10.14 | SmartHome | Cả hai | Gọi thoại rồi gọi video qua Zalo/Messenger |
-| LAPTOP01 | Laptop | 192.168.10.10 | SmartHome | Lớn | Tham gia cuộc họp nhóm cùng LAPTOP02 (ứng dụng desktop) |
+| ROUTER | Router OpenWrt | 192.168.1.1 | — | Cả hai | Gateway, capture |
+| CAPTURE-SERVER | Server capture | 192.168.1.60 | LAN port | Cả hai | Capture |
+| LAPTOP02 | Laptop | 192.168.1.11 | SmartHome | Cả hai | Google Meet/Zoom/Teams: bật camera, tắt camera, chia sẻ màn hình |
+| PHONE01 | Smartphone | 192.168.1.14 | SmartHome | Cả hai | Gọi thoại rồi gọi video qua Zalo/Messenger |
+| LAPTOP01 | Laptop | 192.168.1.10 | SmartHome | Lớn | Tham gia cuộc họp nhóm cùng LAPTOP02 (ứng dụng desktop) |
 | Đối tác ngoài | Thiết bị bên ngoài | — | 4G/mạng khác | Cả hai | Đầu bên kia của cuộc gọi |
 | Còn lại | — | — | SmartHome | Cả hai | Để chờ |
-| CAM01–CAM03 | IP camera | 192.168.10.30–32 | SmartHome | Cả hai | Nền |
-| IOT01–IOT03 | IoT MQTT | 192.168.10.40–42 | SmartHome | Cả hai | S08 |
+| CAM01–CAM03 | IP camera | 192.168.1.30–32 | SmartHome | Cả hai | Nền |
+| IOT01–IOT03 | IoT MQTT | 192.168.1.40–42 | SmartHome | Cả hai | S08 |
 
 ## 3. Thời gian thu
 
@@ -99,8 +99,8 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 | 2 | Không có traffic SSH của CAPTURE-SERVER | `tcp.port == 22` → 0 gói | [ ] |
 | 3 | Có STUN/TURN khi bắt đầu cuộc gọi | `stun` hoặc `udp.port == 3478 \|\| udp.port == 19302` | [ ] |
 | 4 | Có luồng UDP hai chiều kéo dài, tốc độ gói ổn định cho LAPTOP02 và PHONE01 | Statistics → Conversations → UDP, Duration ≥ 3 phút | [ ] |
-| 5 | Thấy throughput giảm khi tắt camera (phút 06–08) và tăng khi share màn hình | I/O Graph `ip.addr == 192.168.10.11` | [ ] |
-| 6 | Thấy khác biệt thoại (phút 12–16) và video (16–20) của PHONE01 | I/O Graph `ip.addr == 192.168.10.14` | [ ] |
-| 7 | Không có luồng media đi trực tiếp giữa hai IP nội bộ (đối tác ở ngoài) | `ip.src == 192.168.10.0/24 && ip.dst == 192.168.10.0/24 && udp` → chỉ DNS/NTP/MQTT | [ ] |
+| 5 | Thấy throughput giảm khi tắt camera (phút 06–08) và tăng khi share màn hình | I/O Graph `ip.addr == 192.168.1.11` | [ ] |
+| 6 | Thấy khác biệt thoại (phút 12–16) và video (16–20) của PHONE01 | I/O Graph `ip.addr == 192.168.1.14` | [ ] |
+| 7 | Không có luồng media đi trực tiếp giữa hai IP nội bộ (đối tác ở ngoài) | `ip.src == 192.168.1.0/24 && ip.dst == 192.168.1.0/24 && udp` → chỉ DNS/NTP/MQTT | [ ] |
 | 8 | MQTT nền vẫn đều đặn | `mqtt.msgtype == 3` | [ ] |
 | 9 | Dòng `metadata.csv` và nhật ký thao tác đầy đủ | Mở file | [ ] |

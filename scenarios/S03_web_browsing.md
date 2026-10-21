@@ -14,9 +14,9 @@
                               INTERNET  (web, mạng xã hội, CDN)
                                   |
                                 (WAN)
-                 ROUTER OpenWrt  192.168.10.1
+                 ROUTER OpenWrt  192.168.1.1
                  [DHCP/DNS/NTP] [Mosquitto :1883]
-                 [tcpdump br-lan] <----SSH---- CAPTURE-SERVER 192.168.10.60 (LAN port)
+                 [tcpdump br-lan] <----SSH---- CAPTURE-SERVER 192.168.1.60 (LAN port)
                                   |
                                br-lan
               +-------------------+--------------------+
@@ -36,17 +36,17 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 
 | Device ID | Loại | IP | Mạng | Cấu hình | Hoạt động trong kịch bản |
 |---|---|---|---|---|---|
-| ROUTER | Router OpenWrt | 192.168.10.1 | — | Cả hai | Gateway, DNS resolver, capture |
-| CAPTURE-SERVER | Server capture | 192.168.10.60 | LAN port | Cả hai | Capture |
-| LAPTOP01 | Laptop | 192.168.10.10 | SmartHome | Cả hai | Trình duyệt: báo điện tử, Google Search, Wikipedia |
-| LAPTOP02 | Laptop | 192.168.10.11 | SmartHome | Cả hai | Trình duyệt: Shopee/Lazada/Tiki, so sánh sản phẩm, đọc review |
-| LAPTOP04 | Laptop | 192.168.10.13 | SmartHome | Lớn | Trình duyệt: diễn đàn, tài liệu kỹ thuật, email web |
-| PHONE01 | Smartphone | 192.168.10.14 | SmartHome | Cả hai | App Facebook/Instagram: lướt feed, xem ảnh, bình luận |
-| PHONE02 | Smartphone | 192.168.10.15 | SmartHome | Cả hai | App báo điện tử, Google News, đọc bài |
-| PHONE03 | Smartphone | 192.168.10.16 | SmartHome | Lớn | App Zalo/Messenger nhắn tin, mở link chia sẻ |
+| ROUTER | Router OpenWrt | 192.168.1.1 | — | Cả hai | Gateway, DNS resolver, capture |
+| CAPTURE-SERVER | Server capture | 192.168.1.60 | LAN port | Cả hai | Capture |
+| LAPTOP01 | Laptop | 192.168.1.10 | SmartHome | Cả hai | Trình duyệt: báo điện tử, Google Search, Wikipedia |
+| LAPTOP02 | Laptop | 192.168.1.11 | SmartHome | Cả hai | Trình duyệt: Shopee/Lazada/Tiki, so sánh sản phẩm, đọc review |
+| LAPTOP04 | Laptop | 192.168.1.13 | SmartHome | Lớn | Trình duyệt: diễn đàn, tài liệu kỹ thuật, email web |
+| PHONE01 | Smartphone | 192.168.1.14 | SmartHome | Cả hai | App Facebook/Instagram: lướt feed, xem ảnh, bình luận |
+| PHONE02 | Smartphone | 192.168.1.15 | SmartHome | Cả hai | App báo điện tử, Google News, đọc bài |
+| PHONE03 | Smartphone | 192.168.1.16 | SmartHome | Lớn | App Zalo/Messenger nhắn tin, mở link chia sẻ |
 | Còn lại (LAPTOP03, PHONE04–06) | — | — | SmartHome | Lớn | Để chờ, không thao tác |
-| CAM01–CAM03 | IP camera | 192.168.10.30–32 | SmartHome | Cả hai | Nền, không ai xem |
-| IOT01–IOT03 | IoT MQTT | 192.168.10.40–42 | SmartHome | Cả hai | S08 |
+| CAM01–CAM03 | IP camera | 192.168.1.30–32 | SmartHome | Cả hai | Nền, không ai xem |
+| IOT01–IOT03 | IoT MQTT | 192.168.1.40–42 | SmartHome | Cả hai | S08 |
 
 **Quy tắc thao tác:** mỗi trang đọc 10–60 giây trước khi chuyển; mỗi thiết bị truy cập ≥ 10 trang/domain khác nhau trong phiên; không tải file lớn, không xem video dài (> 1 phút).
 

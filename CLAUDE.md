@@ -22,7 +22,7 @@ Bộ tài liệu và công cụ **thu normal traffic (không gán nhãn)** của
 - **Môi trường lab:** viết "thành viên lab", "người vận hành", "ngoài mạng SmartHome"; không viết như thể thu ở nhà thật ("người trong nhà", "ngoài mạng nhà"). Vai "bố/mẹ/con" chỉ là vai mô phỏng. Điều kiện lab nằm ở mục 1.4 tài liệu gốc.
 - **Không gán nhãn:** không thêm trường `label`, `class`, `attack_type`, `Benign`. ID kịch bản chỉ xuất hiện trong `metadata.csv` (cột `active_scenarios`), không phải nhãn.
 - **Khung giờ thu: chỉ 07:00–18:00.** Không đưa buổi tối hoặc ban đêm vào ví dụ, timeline hay khung giờ thu.
-- **Mạng:** một subnet `192.168.10.0/24` trên `br-lan`, **một SSID chung `SmartHome`** cho mọi thiết bị Wi-Fi (người dùng đã quyết định bỏ hai SSID riêng).
+- **Mạng:** một subnet `192.168.1.0/24` trên `br-lan`, **một SSID chung `SmartHome`** cho mọi thiết bị Wi-Fi (người dùng đã quyết định bỏ hai SSID riêng).
   - Hệ quả đã chấp nhận: unicast giữa hai thiết bị Wi-Fi (ví dụ viewer ↔ camera trong LAN) không đi qua `br-lan` nên không thu được. Không đưa tiêu chí nghiệm thu nào đòi hỏi luồng này, trừ khi camera cắm dây.
   - Không đặt tên viết tắt khó nhớ kiểu `SH-`.
 - **Mã thiết bị và IP:**
@@ -45,7 +45,7 @@ Bộ tài liệu và công cụ **thu normal traffic (không gán nhãn)** của
   - Topic theo dạng `smarthome/<device_id>/<message_type>` (`telemetry`, `event`, `state`, `ack`, `cmd`, `status`).
   - LWT `smarthome/<device_id>/status`, keepalive 60 giây.
   - S08 chạy nền trong mọi phiên.
-- **Bộ lọc Wireshark cho nhiều IP:** dùng `ip.addr in {192.168.10.30 192.168.10.31 192.168.10.32}`. Không dùng CIDR như `/30`, vì `/30` lệch dải.
+- **Bộ lọc Wireshark cho nhiều IP:** dùng `ip.addr in {192.168.1.30 192.168.1.31 192.168.1.32}`. Không dùng CIDR như `/30`, vì `/30` lệch dải.
 - **Metadata:**
   - Thời gian theo ISO 8601 có timezone `+07:00`.
   - Tên PCAP dạng `SESxxx_YYYYMMDD_HHMMSS.pcap`.

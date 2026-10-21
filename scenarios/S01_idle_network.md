@@ -14,9 +14,9 @@
                               INTERNET
                                   |
                                 (WAN)
-                 ROUTER OpenWrt  192.168.10.1
+                 ROUTER OpenWrt  192.168.1.1
                  [DHCP/DNS/NTP] [Mosquitto :1883]
-                 [tcpdump br-lan] <----SSH---- CAPTURE-SERVER 192.168.10.60 (LAN port)
+                 [tcpdump br-lan] <----SSH---- CAPTURE-SERVER 192.168.1.60 (LAN port)
                                   |
                                br-lan
               +-------------------+--------------------+
@@ -36,14 +36,14 @@ Chú thích: ● hoạt động chủ động   ○ chỉ có traffic nền
 
 | Device ID | Loại | IP | Mạng | Cấu hình | Trạng thái trong kịch bản |
 |---|---|---|---|---|---|
-| ROUTER | Router OpenWrt | 192.168.10.1 | — | Cả hai | Gateway, DHCP/DNS/NTP, broker, capture `br-lan` |
-| CAPTURE-SERVER | Server capture | 192.168.10.60 | LAN port | Cả hai | Nhận PCAP qua SSH, không dùng cho việc khác |
-| LAPTOP01–LAPTOP02 | Laptop | 192.168.10.10–11 | SmartHome | Cả hai | Bật, đăng nhập, đóng toàn bộ trình duyệt/app; laptop cắm sạc, không cho sleep |
-| LAPTOP03–LAPTOP04 | Laptop | 192.168.10.12–13 | SmartHome | Lớn | Như LAPTOP01 |
-| PHONE01–PHONE02 | Smartphone | 192.168.10.14–15 | SmartHome | Cả hai | Khóa màn hình, giữ Wi-Fi, app chạy nền như thường ngày |
-| PHONE03–PHONE06 | Smartphone | 192.168.10.16–19 | SmartHome | Lớn | Như PHONE01 |
-| CAM01–CAM03 | IP camera | 192.168.10.30–32 | SmartHome | Cả hai | Bật, **không có ai xem** |
-| IOT01–IOT03 | IoT MQTT | 192.168.10.40–42 | SmartHome | Cả hai | Chạy S08 bình thường |
+| ROUTER | Router OpenWrt | 192.168.1.1 | — | Cả hai | Gateway, DHCP/DNS/NTP, broker, capture `br-lan` |
+| CAPTURE-SERVER | Server capture | 192.168.1.60 | LAN port | Cả hai | Nhận PCAP qua SSH, không dùng cho việc khác |
+| LAPTOP01–LAPTOP02 | Laptop | 192.168.1.10–11 | SmartHome | Cả hai | Bật, đăng nhập, đóng toàn bộ trình duyệt/app; laptop cắm sạc, không cho sleep |
+| LAPTOP03–LAPTOP04 | Laptop | 192.168.1.12–13 | SmartHome | Lớn | Như LAPTOP01 |
+| PHONE01–PHONE02 | Smartphone | 192.168.1.14–15 | SmartHome | Cả hai | Khóa màn hình, giữ Wi-Fi, app chạy nền như thường ngày |
+| PHONE03–PHONE06 | Smartphone | 192.168.1.16–19 | SmartHome | Lớn | Như PHONE01 |
+| CAM01–CAM03 | IP camera | 192.168.1.30–32 | SmartHome | Cả hai | Bật, **không có ai xem** |
+| IOT01–IOT03 | IoT MQTT | 192.168.1.40–42 | SmartHome | Cả hai | Chạy S08 bình thường |
 
 ## 3. Thời gian thu
 

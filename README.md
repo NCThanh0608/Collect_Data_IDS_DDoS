@@ -24,9 +24,9 @@ Dự án thu thập **lưu lượng mạng bình thường (normal traffic)** c�
 ```text
                          INTERNET
                              |
-          ROUTER OpenWrt 192.168.10.1  (DHCP/DNS, Mosquitto, tcpdump trên br-lan)
+          ROUTER OpenWrt 192.168.1.1  (DHCP/DNS, Mosquitto, tcpdump trên br-lan)
                              |
-                          br-lan  <---- CAPTURE-SERVER 192.168.10.60 (SSH, lưu PCAP)
+                          br-lan  <---- CAPTURE-SERVER 192.168.1.60 (SSH, lưu PCAP)
                              |
                SSID "SmartHome" (chung cho mọi thiết bị Wi-Fi)
      LAPTOP01–04   .10–.13          CAM01–CAM03   .30–.32

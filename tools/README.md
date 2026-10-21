@@ -33,7 +33,7 @@ Script chỉ dùng thư viện chuẩn của Python, không cần `pip install`.
 | Python ≥ 3.8 | Cài từ python.org, tích *Add python to PATH* | Thường có sẵn (`python3 --version`) |
 | Wireshark CLI: `dumpcap`, `tshark`, `capinfos` | Cài Wireshark vào thư mục mặc định `C:\Program Files\Wireshark` | `sudo apt install tshark` (kèm `dumpcap` và `capinfos`) |
 | OpenSSH client | Kiểm tra `ssh -V`. Nếu thiếu: *Settings → Apps → Optional features → OpenSSH Client* | `sudo apt install openssh-client` |
-| Kết nối mạng | Cắm dây vào cổng LAN của router, IP tĩnh `192.168.10.60` (DHCP static lease) | Như Windows |
+| Kết nối mạng | Cắm dây vào cổng LAN của router, IP tĩnh `192.168.1.60` (DHCP static lease) | Như Windows |
 
 Script tìm Wireshark CLI theo thứ tự: tham số `--wireshark-dir` → biến `PATH` → `C:\Program Files\Wireshark` (Windows).
 
@@ -46,15 +46,15 @@ Script không nhập được mật khẩu, nên bắt buộc dùng SSH key.
 **Windows (PowerShell):**
 ```powershell
 ssh-keygen -t ed25519                     # Enter để chấp nhận mặc định, để trống passphrase
-type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh root@192.168.10.1 "cat >> /etc/dropbear/authorized_keys"
-ssh -o BatchMode=yes root@192.168.10.1 "echo OK"   # phải in OK mà không hỏi mật khẩu
+type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh root@192.168.1.1 "cat >> /etc/dropbear/authorized_keys"
+ssh -o BatchMode=yes root@192.168.1.1 "echo OK"   # phải in OK mà không hỏi mật khẩu
 ```
 
 **Linux:**
 ```sh
 ssh-keygen -t ed25519
-cat ~/.ssh/id_ed25519.pub | ssh root@192.168.10.1 "cat >> /etc/dropbear/authorized_keys"
-ssh -o BatchMode=yes root@192.168.10.1 "echo OK"
+cat ~/.ssh/id_ed25519.pub | ssh root@192.168.1.1 "cat >> /etc/dropbear/authorized_keys"
+ssh -o BatchMode=yes root@192.168.1.1 "echo OK"
 ```
 
 ### 2.3. Router OpenWrt
@@ -162,9 +162,9 @@ Script ghi `metadata.csv` nếu phiên chưa có trong đó, rồi chạy nghi�
 | `--check-only` | tắt | Không thu, chỉ ghi metadata (nếu thiếu) và nghiệm thu. Dùng kèm `--session-id` |
 | `--session-id` | tự tăng | Mã phiên, ví dụ `SES005`. Khi thu mới, script tự lấy số tiếp theo trong `metadata.csv` |
 | `--force` | tắt | Vẫn thu dù kiểm tra trước khi thu có lỗi (ví dụ ngoài khung giờ). Chỉ dùng khi thử nghiệm |
-| `--router-ip` | `192.168.10.1` | IP router |
+| `--router-ip` | `192.168.1.1` | IP router |
 | `--router-user` | `root` | User SSH vào router |
-| `--capture-server-ip` | `192.168.10.60` | IP máy thu, dùng để loại traffic SSH khỏi PCAP |
+| `--capture-server-ip` | `192.168.1.60` | IP máy thu, dùng để loại traffic SSH khỏi PCAP |
 | `--interface` | `br-lan` | Interface thu trên router |
 | `--out-dir` | `data/` | Thư mục lưu dữ liệu |
 | `--wireshark-dir` | tự tìm | Thư mục chứa `dumpcap`/`tshark`/`capinfos` nếu không nằm trong `PATH` |
@@ -235,13 +235,13 @@ Cuối mỗi phiên, script in một bảng như sau:
 | Thông báo | Nguyên nhân thường gặp | Cách xử lý |
 |---|---|---|
 | `Không tìm thấy dumpcap/tshark/capinfos` | Chưa cài Wireshark CLI hoặc không nằm trong `PATH` | Cài theo mục 2.1, hoặc chỉ đường bằng `--wireshark-dir` |
-| `Không SSH được vào root@192.168.10.1` | Chưa cài SSH key, sai IP, máy thu chưa vào mạng | Làm lại mục 2.2; thử `ssh -o BatchMode=yes root@192.168.10.1 "echo OK"` |
+| `Không SSH được vào root@192.168.1.1` | Chưa cài SSH key, sai IP, máy thu chưa vào mạng | Làm lại mục 2.2; thử `ssh -o BatchMode=yes root@192.168.1.1 "echo OK"` |
 | `Flow offloading đang bật` | Chưa tắt offloading | Chạy lệnh tắt ở mục 2.3 |
 | `Mosquitto không chạy` | Broker chưa khởi động | `/etc/init.d/mosquitto start` trên router |
 | `Lệch đồng hồ router` | NTP chưa đồng bộ | Bật NTP trên router và máy thu, đợi vài phút rồi chạy lại |
 | `nằm ngoài khung 07:00-18:00` | Giờ bắt đầu cộng thời lượng vượt 18:00 | Thu vào khung giờ khác, hoặc giảm `--duration-min` |
 | `Ổ đĩa còn ... GB` | Ổ không đủ chỗ | Dọn ổ hoặc đổi `--out-dir` sang ổ khác |
-| `Không có file PCAP nào` | Pipe SSH bị ngắt ngay từ đầu | Xem `data/logs/<session>_tcpdump.log`; thử chạy tay `ssh root@192.168.10.1 "tcpdump -i br-lan -c 5"` |
+| `Không có file PCAP nào` | Pipe SSH bị ngắt ngay từ đầu | Xem `data/logs/<session>_tcpdump.log`; thử chạy tay `ssh root@192.168.1.1 "tcpdump -i br-lan -c 5"` |
 | `timeout: not found` trong log tcpdump | BusyBox không có `timeout` | Nâng cấp OpenWrt hoặc cài bản BusyBox có `timeout` |
 | FAIL `Không có SSH của CAPTURE-SERVER` | Có máy khác SSH vào router, hoặc sai `--capture-server-ip` | Kiểm tra IP máy thu; không SSH từ máy khác khi đang thu |
 | FAIL `IOT0x xuất hiện` | Thiết bị IoT mất kết nối hoặc sai IP | Kiểm tra static lease, nguồn, Wi-Fi của thiết bị |

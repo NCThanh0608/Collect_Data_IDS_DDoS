@@ -14,9 +14,9 @@
                               INTERNET
                                   |
                                 (WAN)
-                 ROUTER OpenWrt  192.168.10.1
+                 ROUTER OpenWrt  192.168.1.1
                  [DHCP/DNS/NTP] [Mosquitto :1883]
-                 [tcpdump br-lan] <----SSH---- CAPTURE-SERVER 192.168.10.60 (LAN port)
+                 [tcpdump br-lan] <----SSH---- CAPTURE-SERVER 192.168.1.60 (LAN port)
                                   |
                                br-lan
               +-------------------+--------------------+
@@ -38,18 +38,18 @@ Mỗi thiết bị do một thành viên lab vận hành, đóng vai một "thà
 
 | Device ID | Loại | IP | Cấu hình | Vai trò giả định | Hoạt động chính |
 |---|---|---|---|---|---|
-| LAPTOP01 | Laptop | 192.168.10.10 | Cả hai | Bố | Xem tin tức, YouTube, duyệt web |
-| LAPTOP02 | Laptop | 192.168.10.11 | Cả hai | Mẹ | Họp online 15 phút, email, upload tài liệu lên cloud |
-| PHONE01 | Smartphone | 192.168.10.14 | Cả hai | Bố | Facebook, Zalo, xem CAM01 ngoài cổng |
-| PHONE02 | Smartphone | 192.168.10.15 | Cả hai | Con | TikTok, nhắn tin, bật/tắt đèn (IOT03) |
-| LAPTOP03 | Laptop | 192.168.10.12 | Lớn | Con lớn | Game online nhẹ / học online, tải tài liệu |
-| LAPTOP04 | Laptop | 192.168.10.13 | Lớn | Con lớn | Phim trực tuyến |
-| PHONE03 | Smartphone | 192.168.10.16 | Lớn | Mẹ | Backup ảnh, mua sắm online |
-| PHONE04 | Smartphone | 192.168.10.17 | Lớn | Ông/bà | Xem video YouTube, gọi video Zalo (người nghe ở ngoài) |
-| PHONE05 | Smartphone | 192.168.10.18 | Lớn | Khách | Mạng xã hội, chủ yếu ở trạng thái chờ |
-| PHONE06 | Smartphone | 192.168.10.19 | Lớn | Khách | Web, email, nhắn tin |
-| CAM01–CAM03 | IP camera | 192.168.10.30–32 | Cả hai | — | Nền + được xem theo khung giờ |
-| IOT01–IOT03 | IoT MQTT | 192.168.10.40–42 | Cả hai | — | S08 + nhận lệnh điều khiển |
+| LAPTOP01 | Laptop | 192.168.1.10 | Cả hai | Bố | Xem tin tức, YouTube, duyệt web |
+| LAPTOP02 | Laptop | 192.168.1.11 | Cả hai | Mẹ | Họp online 15 phút, email, upload tài liệu lên cloud |
+| PHONE01 | Smartphone | 192.168.1.14 | Cả hai | Bố | Facebook, Zalo, xem CAM01 ngoài cổng |
+| PHONE02 | Smartphone | 192.168.1.15 | Cả hai | Con | TikTok, nhắn tin, bật/tắt đèn (IOT03) |
+| LAPTOP03 | Laptop | 192.168.1.12 | Lớn | Con lớn | Game online nhẹ / học online, tải tài liệu |
+| LAPTOP04 | Laptop | 192.168.1.13 | Lớn | Con lớn | Phim trực tuyến |
+| PHONE03 | Smartphone | 192.168.1.16 | Lớn | Mẹ | Backup ảnh, mua sắm online |
+| PHONE04 | Smartphone | 192.168.1.17 | Lớn | Ông/bà | Xem video YouTube, gọi video Zalo (người nghe ở ngoài) |
+| PHONE05 | Smartphone | 192.168.1.18 | Lớn | Khách | Mạng xã hội, chủ yếu ở trạng thái chờ |
+| PHONE06 | Smartphone | 192.168.1.19 | Lớn | Khách | Web, email, nhắn tin |
+| CAM01–CAM03 | IP camera | 192.168.1.30–32 | Cả hai | — | Nền + được xem theo khung giờ |
+| IOT01–IOT03 | IoT MQTT | 192.168.1.40–42 | Cả hai | — | S08 + nhận lệnh điều khiển |
 | ROUTER / CAPTURE-SERVER | Router / Server | .1 / .60 | Cả hai | — | Gateway / capture |
 
 ## 3. Thời gian thu
@@ -103,7 +103,7 @@ Mỗi thiết bị do một thành viên lab vận hành, đóng vai một "thà
 | 1 | Tổng thời lượng các file ≥ 58 phút, liên tục (không hở giữa các file), drop < 0,1% | `capinfos` từng file, số liệu tcpdump | [ ] |
 | 2 | Không có traffic SSH của CAPTURE-SERVER | `tcp.port == 22` → 0 gói | [ ] |
 | 3 | **Tất cả** thiết bị của cấu hình xuất hiện | Statistics → Endpoints → IPv4 | [ ] |
-| 4 | Có đủ loại traffic: DNS, TLS/QUIC, UDP media, traffic camera, MQTT | `dns`, `quic`, `stun`, `ip.addr in {192.168.10.30 192.168.10.31 192.168.10.32}`, `mqtt` | [ ] |
+| 4 | Có đủ loại traffic: DNS, TLS/QUIC, UDP media, traffic camera, MQTT | `dns`, `quic`, `stun`, `ip.addr in {192.168.1.30 192.168.1.31 192.168.1.32}`, `mqtt` | [ ] |
 | 5 | Có giai đoạn nhiều luồng đồng thời (phút 05–40) | I/O Graph tổng + theo từng IP | [ ] |
 | 6 | Có lệnh điều khiển IOT03 và phản hồi | `mqtt.topic contains "iot03"` | [ ] |
 | 7 | CPU router không vượt 90% kéo dài | Log `top` | [ ] |
