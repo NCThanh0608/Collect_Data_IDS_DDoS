@@ -1,6 +1,8 @@
 # Included by Ubuntu's /etc/apparmor.d/usr.sbin.rsyslogd profile.
 /opt/victim-lab/rsyslog/victim.conf r,
 /opt/victim-lab/scripts/rotate_syslog.sh rix,
+/{usr/,}bin/bash ix,
+/{usr/,}bin/mv ix,
 /var/log/victim-lab/ rw,
 /var/log/victim-lab/syslog.jsonl* rwk,
 /var/log/victim-lab/rsyslog-stats.log* rwk,

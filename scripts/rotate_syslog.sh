@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -euo pipefail
 
 log_file=/var/log/victim-lab/syslog.jsonl

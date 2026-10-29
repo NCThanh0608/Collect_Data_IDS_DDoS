@@ -75,7 +75,7 @@ Rsyslog 8.2504 cần mẫu ghi JSONL có dấu xuống dòng nằm ngoài object
 
 ## Chỉ số và log
 
-- `/var/log/victim-lab/syslog.jsonl`: bản tin Syslog dạng JSONL, xoay khi đạt khoảng 20 MiB và giữ ba bản cũ `.1`–`.3`.
+- `/var/log/victim-lab/syslog.jsonl`: bản tin Syslog dạng JSONL, xoay khi đạt khoảng 20 MiB. Giữ tối đa ba bản cũ `.1`–`.3`; mỗi lần xoay tiếp theo tự xóa bản cũ nhất.
 - `/var/log/victim-lab/rsyslog-stats.log`: bộ đếm rsyslog, được thêm mỗi 5 giây; logrotate kiểm tra hàng ngày, xoay khi vượt 1 MiB và giữ ba bản cũ.
 - `/var/log/victim-lab/metrics.jsonl`: collector ghi UTC timestamp, `experiment_id`, CPU/RAM/nhiệt độ, network RX/TX/drops, bộ đếm UDP/TCP và snapshot Syslog; xoay ở 20 MiB và giữ ba bản cũ.
 - HTTP access log ở `sudo journalctl -u victim-http -o cat`. Log không chứa mật khẩu, cookie, request body hoặc query string.
@@ -92,3 +92,54 @@ Tài khoản `admin/admin` chỉ dành cho lab cô lập. Nếu mở web ra mạ
 python -m pip install -r requirements.txt
 python -m unittest discover -s tests -v
 ```
+
+# NOT AI
+## Các device/network
+`192.168.1.0/24`: Mạng LAN gồm các device IoT.
+`192.168.1.1`: Router để định tuyến từ các device trong LAN -> WAN
+`192.168.1.146`: Gateway trỏ đến WAN ảo
+`10.20.0.0/24`: Mạng WAN ảo
+`10.20.0.1`: đầu veth-pi ở Ubuntu host. Nó làm gateway cho máy ảo mạng.
+`10.20.0.2`: đầu veth-vic trong network namespace victim. Web chạy tại `10.20.0.2:8080`, Syslog nhận tại `10.20.0.2:514`/UDP.
+## Mô hình demo:
+Các `device IoT` sẽ được kết nối tới `WAN server` thông qua 1 router có địa chỉ `192.168.1.1/24`.
+Router phải được cấu hình định tuyến để trỏ tới mạng WAN ảo. Ở đây sử dụng `192.168.1.146/24` là cổng ethernet của `device WAN` làm gateway trỏ đến `10.20.0.0/24`. Device sẽ forward các gói tin nhận được từ router qua cổng ethernet đến WAN ảo
+## Quy trình setup DEMO
+```bash
+sudo nano /etc/netplan/01-network-manager-all.yaml
+```
+Patse:
+```nano
+network:
+    version: 2
+    renderer: NetworkManager
+    ethernets:
+        `X`:
+            dhcp4: false
+            addresses:
+                -   192.168.1.146/24
+            routes:
+                -   to: default
+                    via 192.168.1.1
+            nameservers:
+                addresses:
+                    -   8.8.8.8
+                    -   1.1.1.1
+```
+Với `X` là tên interface ethernet
+
+Restart lại network:
+```bash
+sudo netplan generate
+sudo netplan try
+```
+
+Cấu hình ip forward:
+```bash
+sudo nano /etc/sysctl.d/99-ip-forward.conf
+```
+```nano
+net.ipv4.ip_forward=1
+```
+
+Cấu hình static route trên router(192.168.1.1): Route tới 10.20.0.0/24 via 192.168.1.146
