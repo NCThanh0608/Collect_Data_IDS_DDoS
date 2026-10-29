@@ -25,6 +25,7 @@ from victim_lab.http.app import access_logger, app  # noqa: E402
 from victim_lab.monitor.collect import sample  # noqa: E402
 from victim_lab.syslog.probe import send_probe  # noqa: E402
 from victim_lab.syslog.reader import (  # noqa: E402
+    dashboard_status,
     read_kernel_udp_errors,
     read_rate,
     read_rsyslog_stats,
@@ -99,11 +100,14 @@ class SyslogReaderTests(unittest.TestCase):
                 'new: {"name":"imudp(w0)","origin":"imudp","disallowed":2}',
                 'new: {"name":"imudp(w1)","origin":"imudp","disallowed":1}',
                 'new: {"name":"main Q","origin":"core.queue","discarded.full":3,"discarded.nf":1}',
+                'new: {"name":"lab_messages","origin":"core.action","processed":12,"failed":5,"suspended":1,"resumed":0}',
             ]), encoding="utf-8")
             result = read_rsyslog_stats(stats)
             self.assertEqual(result["received_total"], 12)
             self.assertEqual(result["disallowed_total"], 3)
             self.assertEqual(result["queue_discarded_total"], 4)
+            self.assertEqual(result["write_failed_total"], 5)
+            self.assertEqual(result["write_suspended_total"], 1)
 
             logs = root / "syslog.jsonl"
             logs.write_text(json.dumps({
@@ -116,6 +120,23 @@ class SyslogReaderTests(unittest.TestCase):
             self.assertIn("<script>", messages[0]["message"])
             self.assertNotIn("\n", messages[0]["message"])
             self.assertLessEqual(len(messages[0]["message"]), 500)
+
+    def test_dashboard_reports_stalled_log_output(self):
+        with tempfile.TemporaryDirectory() as directory:
+            log_file = Path(directory) / "syslog.jsonl"
+            stats = {"write_suspended_total": 0, "write_resumed_total": 0}
+            with patch("victim_lab.syslog.reader.MESSAGES_FILE", log_file), \
+                 patch("victim_lab.syslog.reader.LOG_ROTATION_LIMIT_BYTES", 8), \
+                 patch("victim_lab.syslog.reader.read_rsyslog_stats", return_value=stats), \
+                 patch("victim_lab.syslog.reader.recent_messages", return_value=[]), \
+                 patch("victim_lab.syslog.reader.read_rate", return_value=None), \
+                 patch("victim_lab.syslog.reader.read_kernel_udp_errors", return_value=None):
+                log_file.write_bytes(b"x" * 9)
+                self.assertEqual(dashboard_status()["status"], "log_stalled")
+                log_file.write_bytes(b"x")
+                self.assertEqual(dashboard_status()["status"], "online")
+                stats["write_suspended_total"] = 1
+                self.assertEqual(dashboard_status()["status"], "log_stalled")
 
     def test_rate_and_kernel_errors_expire_with_monitor_samples(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -80,7 +80,7 @@ Rsyslog 8.2504 cần mẫu ghi JSONL có dấu xuống dòng nằm ngoài object
 - `/var/log/victim-lab/metrics.jsonl`: collector ghi UTC timestamp, `experiment_id`, CPU/RAM/nhiệt độ, network RX/TX/drops, bộ đếm UDP/TCP và snapshot Syslog; xoay ở 20 MiB và giữ ba bản cũ.
 - HTTP access log ở `sudo journalctl -u victim-http -o cat`. Log không chứa mật khẩu, cookie, request body hoặc query string.
 
-`Bản tin đã nhận` là số rsyslog đưa vào pipeline, không phải số mà mọi client khẳng định đã gửi. UDP không có xác nhận; gói bị loại trước socket không nằm trong bộ đếm rsyslog. `Rsyslog từ chối` lấy từ các worker `imudp` (sẽ bằng 0 khi không cấu hình hạn chế nguồn); `Lỗi nhận UDP (kernel)` là bộ đếm của cả namespace, không chỉ riêng cổng 514.
+`Bản tin đã nhận` là số rsyslog đưa vào pipeline, không phải số mà mọi client khẳng định đã gửi. UDP không có xác nhận; gói bị loại trước socket không nằm trong bộ đếm rsyslog. `Nguồn bị chặn` lấy từ các worker `imudp` và luôn bằng 0 khi không cấu hình hạn chế nguồn. `Hàng đợi loại bỏ` chỉ đếm bản tin bị loại ở hàng đợi, không đếm lỗi ghi file. `Lỗi ghi log` lấy từ action `lab_messages`; nếu file chạm ngưỡng 20 MiB mà không xoay được, trạng thái Syslog báo lỗi ghi log. `Lỗi nhận UDP (kernel)` là bộ đếm của cả namespace, không chỉ riêng cổng 514.
 
 Có thể sửa `EXPERIMENT_ID` và `COLLECT_INTERVAL` trong `/etc/victim-lab/experiment.env`, rồi restart `victim-http` và `victim-monitor`. Dừng ứng dụng bằng `sudo systemctl stop victim-monitor victim-http victim-syslog`. Namespace vẫn hoạt động để có thể khởi động lại dịch vụ.
 

@@ -9,6 +9,7 @@
     disallowed: document.getElementById("disallowed-total"),
     queueDiscarded: document.getElementById("queue-discarded-total"),
     kernelUdpErrors: document.getElementById("kernel-udp-errors"),
+    writeFailed: document.getElementById("write-failed-total"),
     messages: document.getElementById("recent-messages"),
     probe: document.getElementById("probe-button"),
     result: document.getElementById("probe-result"),
@@ -41,8 +42,9 @@
       const response = await fetch(dashboard.dataset.statusUrl, { cache: "no-store" });
       if (!response.ok) throw new Error("Chưa có số liệu Syslog");
       const data = await response.json();
-      elements.state.textContent = "Đang nhận";
-      elements.state.className = "state state-online";
+      const logStalled = data.status === "log_stalled";
+      elements.state.textContent = logStalled ? "Lỗi ghi log" : "Đang nhận";
+      elements.state.className = logStalled ? "state state-offline" : "state state-online";
       elements.received.textContent = Number(data.received_total).toLocaleString("vi-VN");
       elements.rate.textContent = data.rate_per_second == null
         ? "—"
@@ -52,6 +54,9 @@
       elements.kernelUdpErrors.textContent = data.kernel_udp_errors == null
         ? "—"
         : Number(data.kernel_udp_errors).toLocaleString("vi-VN");
+      elements.writeFailed.textContent = data.write_failed_total == null
+        ? "—"
+        : Number(data.write_failed_total).toLocaleString("vi-VN");
       renderMessages(data.messages || []);
 
       if (pendingProbe) {
@@ -60,7 +65,7 @@
           elements.result.textContent = `Đã nhận bản tin thử ${pendingProbe.id.slice(0, 8)}.`;
           pendingProbe = null;
         } else if (Date.now() - pendingProbe.sentAt > 12000) {
-          elements.result.textContent = "Đã gửi nhưng chưa thấy bản tin thử trong log gần đây.";
+          elements.result.textContent = "Không xác nhận được trong 20 log mới nhất; khi flood, bản tin có thể đã bị đẩy khỏi danh sách.";
           pendingProbe = null;
         }
       }

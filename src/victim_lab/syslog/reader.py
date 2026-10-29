@@ -11,6 +11,7 @@ STATS_FILE = LOG_DIR / "rsyslog-stats.log"
 MESSAGES_FILE = LOG_DIR / "syslog.jsonl"
 METRICS_FILE = LOG_DIR / "metrics.jsonl"
 MAX_TAIL_BYTES = 256 * 1024
+LOG_ROTATION_LIMIT_BYTES = 20 * 1024 * 1024
 
 
 def _tail_lines(path, max_bytes=MAX_TAIL_BYTES):
@@ -51,6 +52,7 @@ def read_rsyslog_stats(path=STATS_FILE, max_age_seconds=15):
         raise RuntimeError("Rsyslog statistics are stale")
     listener = None
     queue = None
+    writer = None
     disallowed_total = 0
     snapshot = None
     for prefix, item in _json_records(path):
@@ -58,6 +60,7 @@ def read_rsyslog_stats(path=STATS_FILE, max_age_seconds=15):
             snapshot = prefix
             listener = None
             queue = None
+            writer = None
             disallowed_total = 0
         if item.get("origin") == "imudp" and str(item.get("name", "")).startswith("lab_syslog("):
             listener = item
@@ -65,6 +68,8 @@ def read_rsyslog_stats(path=STATS_FILE, max_age_seconds=15):
             disallowed_total += int(item.get("disallowed", 0))
         elif item.get("origin") == "core.queue" and item.get("name") in {"main Q", "main queue"}:
             queue = item
+        elif item.get("origin") == "core.action" and item.get("name") == "lab_messages":
+            writer = item
     if listener is None:
         raise RuntimeError("Rsyslog UDP listener statistics are missing")
     queue = queue or {}
@@ -72,6 +77,9 @@ def read_rsyslog_stats(path=STATS_FILE, max_age_seconds=15):
         "received_total": int(listener.get("submitted", 0)),
         "disallowed_total": disallowed_total,
         "queue_discarded_total": int(queue.get("discarded.full", 0)) + int(queue.get("discarded.nf", 0)),
+        "write_failed_total": None if writer is None else int(writer.get("failed", 0)),
+        "write_suspended_total": None if writer is None else int(writer.get("suspended", 0)),
+        "write_resumed_total": None if writer is None else int(writer.get("resumed", 0)),
         "stats_age_seconds": round(max(0, age), 1),
     }
 
@@ -166,12 +174,20 @@ def read_kernel_udp_errors(path=METRICS_FILE):
 def dashboard_status():
     stats = read_rsyslog_stats()
     try:
+        log_at_limit = MESSAGES_FILE.stat().st_size >= LOG_ROTATION_LIMIT_BYTES
+    except FileNotFoundError:
+        log_at_limit = False
+    writer_suspended = (
+        stats["write_suspended_total"] is not None
+        and stats["write_suspended_total"] > stats["write_resumed_total"]
+    )
+    try:
         messages = recent_messages()
     except OSError:
         messages = []
     return {
         **stats,
-        "status": "online",
+        "status": "log_stalled" if log_at_limit or writer_suspended else "online",
         "rate_per_second": read_rate(),
         "kernel_udp_errors": read_kernel_udp_errors(),
         "messages": messages,
