@@ -274,7 +274,7 @@ rm -f "$install_dir/bin/coredns" "$install_dir/scripts/lan_dns_config.py"
 rm -rf -- "$install_dir/lan_dns" "$install_dir/dns_service" \
     "$install_dir/victim_http_app" "$install_dir/coap_service" "$install_dir/monitoring"
 
-install -d -m 0755 "$install_dir/src" "$install_dir/rsyslog"
+install -d -m 0755 "$install_dir" "$install_dir/src" "$install_dir/rsyslog"
 rm -rf -- "$install_dir/src/victim_lab"
 cp -a "$source_dir/src/victim_lab" "$install_dir/src/"
 install -d -m 0755 "$install_dir/scripts" "$install_dir/config"
@@ -287,6 +287,17 @@ sed "s/10\.20\.0\.2/$lab_victim_ip/g" "$source_dir/deploy/rsyslog/victim.conf" >
 chmod 0644 "$install_dir/rsyslog/victim.conf"
 chown -R root:root "$install_dir"
 install -d -o victimlab -g victimlab -m 0750 /var/log/victim-lab /var/log/victim-lab/rsyslog-work
+apparmor_profile=/etc/apparmor.d/usr.sbin.rsyslogd
+if [[ -f "$apparmor_profile" && ! -e /etc/apparmor.d/disable/usr.sbin.rsyslogd ]] &&
+   command -v aa-enabled >/dev/null 2>&1 && aa-enabled -q; then
+    if ! command -v apparmor_parser >/dev/null 2>&1; then
+        echo "AppArmor profile exists but apparmor_parser is missing; install the apparmor package." >&2
+        exit 1
+    fi
+    install -d -m 0755 /etc/apparmor.d/rsyslog.d
+    install -m 0644 "$source_dir/deploy/apparmor/victim-lab-rsyslog" /etc/apparmor.d/rsyslog.d/victim-lab-rsyslog
+    apparmor_parser -r "$apparmor_profile"
+fi
 rsyslogd -N1 -f "$install_dir/rsyslog/victim.conf"
 install -d -m 0700 /etc/victim-lab
 secret=""

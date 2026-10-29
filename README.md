@@ -26,6 +26,12 @@ sudo bash scripts/install_deps.sh
 sudo bash scripts/setup_pi.sh
 ```
 
+Trên Ubuntu có AppArmor, `setup_pi.sh` cài rule riêng cho rsyslog để đọc
+`/opt/victim-lab/rsyslog/victim.conf` và ghi log của lab, rồi nạp lại profile
+trước khi kiểm tra cấu hình. Nếu bản cài cũ báo `could not open config file ...
+Permission denied`, cập nhật project và chạy lại `sudo bash scripts/setup_pi.sh`.
+Không cần tắt AppArmor.
+
 `install_deps.sh` cài rsyslog và dependency Python vào `/opt/victim-lab/.venv`; bước này không đổi mạng hoặc khởi động service. `setup_pi.sh` dựng hoặc kiểm tra namespace, chép mã, kiểm tra cấu hình rsyslog, cài unit và bật chúng khi Pi khởi động. Khi chỉ cập nhật mã hoặc giao diện, chạy lại `setup_pi.sh` là đủ. Bản triển khai mới dừng và gỡ unit CoAP cũ; các file metrics đã thu trước đó vẫn được giữ.
 
 Nếu router hoặc client còn dùng IP LAN của Pi làm DNS, đổi sang máy chủ DNS khác đang hoạt động trước khi nâng cấp. Project không còn tiến trình phục vụ cổng 53.
