@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Victim Lab | Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
+</head>
+<body>
+  <main class="dashboard" data-status-url="{{ url_for('syslog_status') }}" data-probe-url="{{ url_for('syslog_probe') }}">
+    <header class="dashboard-header">
+      <div>
+        <div class="eyebrow">VICTIM LAB</div>
+        <h1>Dashboard</h1>
+        <p class="sub">Xin chào, {{ username }}. Theo dõi HTTP và Syslog UDP trên máy đích.</p>
+      </div>
+      <form method="post" action="{{ url_for('logout') }}">
+        <button class="secondary-button" type="submit">Đăng xuất</button>
+      </form>
+    </header>
+
+    <div class="dashboard-cards">
+      <section class="service-panel" aria-labelledby="http-title">
+        <div class="eyebrow">DỊCH VỤ WEB</div>
+        <h2 id="http-title">HTTP <span class="endpoint">Cổng 8080</span></h2>
+        <div class="state state-online">Đang chạy</div>
+        <p class="panel-description">Trang đăng nhập và dashboard đang phục vụ yêu cầu. Endpoint kiểm tra: <code>/healthz</code>.</p>
+      </section>
+
+      <section class="service-panel" aria-labelledby="syslog-title">
+        <div class="service-heading">
+          <div>
+            <div class="eyebrow">DỊCH VỤ UDP</div>
+            <h2 id="syslog-title">Syslog <span class="endpoint">{{ syslog_host }}:514</span></h2>
+          </div>
+          <div id="syslog-state" class="state state-waiting" role="status">Đang kiểm tra…</div>
+        </div>
+
+        <div class="metrics">
+          <div class="metric"><span>Bản tin đã nhận</span><strong id="received-total">—</strong></div>
+          <div class="metric"><span>Bản tin/giây</span><strong id="receive-rate">—</strong></div>
+          <div class="metric"><span>Rsyslog từ chối</span><strong id="disallowed-total">—</strong></div>
+          <div class="metric"><span>Hàng đợi loại bỏ</span><strong id="queue-discarded-total">—</strong></div>
+          <div class="metric"><span>Lỗi nhận UDP (kernel)</span><strong id="kernel-udp-errors">—</strong></div>
+        </div>
+
+        <div class="service-footer">
+          <span class="detail-label">Số liệu cập nhật khoảng 5 giây/lần</span>
+          <button id="probe-button" type="button">Gửi thử bản tin Syslog</button>
+        </div>
+        <p id="probe-result" class="probe-result" aria-live="polite">Nút thử gửi một bản tin UDP từ web server.</p>
+      </section>
+    </div>
+
+    <section class="service-panel log-panel" aria-labelledby="recent-title">
+      <div class="service-heading">
+        <div>
+          <div class="eyebrow">NHẬT KÝ GẦN ĐÂY</div>
+          <h2 id="recent-title">20 bản tin mới nhất</h2>
+        </div>
+      </div>
+      <ul id="recent-messages" class="log-list" aria-live="polite">
+        <li class="log-empty">Chưa có bản tin.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

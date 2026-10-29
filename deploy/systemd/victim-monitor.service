@@ -1,0 +1,27 @@
+[Unit]
+Description=Victim lab system and Syslog metrics collector
+After=victim-netns.service victim-syslog.service
+Requires=victim-netns.service
+Wants=victim-syslog.service
+
+[Service]
+Type=simple
+User=victimlab
+Group=victimlab
+WorkingDirectory=/opt/victim-lab/src
+NetworkNamespacePath=/run/netns/victim
+Environment=PYTHONPATH=/opt/victim-lab/src
+EnvironmentFile=/etc/victim-lab/experiment.env
+ExecStart=/opt/victim-lab/.venv/bin/python -m victim_lab.monitor.collect
+LogsDirectory=victim-lab
+LogsDirectoryMode=0750
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/log/victim-lab
+
+[Install]
+WantedBy=multi-user.target

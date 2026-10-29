@@ -1,0 +1,9 @@
+/var/log/victim-lab/rsyslog-stats.log {
+    daily
+    maxsize 1M
+    rotate 3
+    missingok
+    notifempty
+    compress
+    copytruncate
+}

@@ -1,0 +1,13 @@
+[Unit]
+Description=Create victim lab network namespace and veth
+After=network-online.target
+Wants=network-online.target
+Before=victim-syslog.service victim-http.service victim-monitor.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/bash /opt/victim-lab/scripts/setup_pi.sh --network-only
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

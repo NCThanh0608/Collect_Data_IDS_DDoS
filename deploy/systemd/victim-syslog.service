@@ -1,0 +1,27 @@
+[Unit]
+Description=Victim lab UDP Syslog receiver
+After=victim-netns.service
+Requires=victim-netns.service
+
+[Service]
+Type=simple
+User=victimlab
+Group=victimlab
+WorkingDirectory=/opt/victim-lab
+NetworkNamespacePath=/run/netns/victim
+ExecStartPre=/usr/sbin/rsyslogd -N1 -f /opt/victim-lab/rsyslog/victim.conf
+ExecStart=/usr/sbin/rsyslogd -n -iNONE -f /opt/victim-lab/rsyslog/victim.conf
+Restart=on-failure
+RestartSec=2
+LogsDirectory=victim-lab
+LogsDirectoryMode=0750
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/log/victim-lab
+
+[Install]
+WantedBy=multi-user.target

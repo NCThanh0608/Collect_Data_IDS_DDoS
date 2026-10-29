@@ -1,0 +1,51 @@
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:linear-gradient(145deg,#e9f0fa,#f9fbfe);color:#18283e;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;padding:24px}
+.card{width:min(100%,420px);background:white;border:1px solid #dde6ef;border-radius:18px;box-shadow:0 18px 55px #203d621c;padding:38px}
+.eyebrow{color:#3369c4;font-size:12px;font-weight:750;letter-spacing:2px}
+h1{font-size:27px;margin:18px 0 8px}
+.sub{color:#617085;line-height:1.5;margin:0 0 26px;font-size:14px}
+label{display:block;font-size:13px;font-weight:650;margin:16px 0 7px}
+input{width:100%;border:1px solid #ccd7e2;border-radius:9px;padding:12px 13px;font-size:15px;outline:none}
+input:focus{border-color:#2d6fd4;box-shadow:0 0 0 3px #2d6fd41a}
+button{width:100%;border:0;background:#2563c7;color:white;border-radius:9px;padding:13px;margin-top:22px;font-size:15px;font-weight:700;cursor:pointer}
+button:hover{background:#1c50a2}
+button:disabled{opacity:.55;cursor:wait}
+.error{padding:12px;border-radius:8px;background:#fff0ef;color:#b42318;font-size:13px}
+.success{margin-top:20px;color:#087a49;font-size:13px;font-weight:650}
+.footer{border-top:1px solid #edf0f4;text-align:center;color:#99a4b2;font-size:11px;margin-top:28px;padding-top:20px}
+.dashboard{width:min(100%,960px)}
+.dashboard-header{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;margin-bottom:24px}
+.dashboard-header h1{margin:8px 0}
+.dashboard-header .sub{margin:0}
+.dashboard-header form{flex:none}
+.secondary-button{width:auto;margin:0;background:white;border:1px solid #c9d7e8;color:#2456a1;padding:10px 18px}
+.secondary-button:hover{background:#f2f7fd}
+.service-panel{background:white;border:1px solid #dde6ef;border-radius:18px;box-shadow:0 18px 55px #203d621c;padding:30px}
+.service-heading{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.service-heading h2{font-size:23px;margin:7px 0 0}
+.endpoint{font-size:13px;font-weight:500;color:#617085;margin-left:8px}
+.state{border-radius:999px;padding:8px 13px;font-size:13px;font-weight:700;white-space:nowrap}
+.state-waiting{background:#eef2f7;color:#5d6a7b}
+.state-online{background:#e5f6ed;color:#087a49}
+.state-offline{background:#fff0ef;color:#b42318}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:28px}
+.metric{border:1px solid #e5ebf2;background:#f8fbff;border-radius:12px;padding:18px;min-height:104px}
+.metric span{display:block;font-size:12px;color:#607087;line-height:1.4}
+.metric strong{display:block;font-size:25px;margin-top:12px;overflow-wrap:anywhere}
+.service-footer{display:flex;justify-content:space-between;align-items:center;gap:16px;border-top:1px solid #e9eef4;padding-top:22px;margin-top:24px;font-size:14px}
+.detail-label{display:block;color:#64748b;font-size:12px;margin-bottom:5px}
+.service-footer button{width:auto;margin:0;flex:none}
+.probe-result{color:#617085;font-size:13px;margin:16px 0 0;min-height:20px}
+@media(max-width:720px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.service-footer{align-items:stretch;flex-direction:column}.service-footer button{width:100%}}
+@media(max-width:480px){body{padding:16px}.dashboard-header{align-items:stretch;flex-direction:column}.dashboard-header form,.secondary-button{width:100%}.service-panel{padding:20px}.metrics{grid-template-columns:1fr 1fr;gap:8px}.metric{padding:13px}.metric strong{font-size:21px}.endpoint{display:block;margin-left:0;margin-top:5px}}
+.dashboard-cards{display:grid;grid-template-columns:minmax(220px,1fr) minmax(0,2fr);gap:16px;align-items:stretch}
+.dashboard-cards .metrics{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:20px}
+.dashboard-cards .service-panel h2{font-size:23px;margin:7px 0 16px}
+.panel-description{font-size:14px;line-height:1.6;color:#617085;margin-top:24px}
+.log-panel{margin-top:16px}
+.log-list{list-style:none;padding:0;margin:20px 0 0;max-height:440px;overflow:auto}
+.log-list li{padding:12px 0;border-top:1px solid #edf0f4}
+.log-detail{display:block;color:#64748b;font-size:12px;margin-bottom:5px;overflow-wrap:anywhere}
+.log-message{display:block;font-size:14px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}
+.log-empty{color:#64748b;font-size:14px}
+@media(max-width:720px){.dashboard-cards{grid-template-columns:1fr}}

@@ -1,0 +1,25 @@
+[Unit]
+Description=Victim lab HTTP application (Gunicorn)
+After=victim-netns.service
+Requires=victim-netns.service
+
+[Service]
+Type=simple
+User=victimlab
+Group=victimlab
+WorkingDirectory=/opt/victim-lab/src
+NetworkNamespacePath=/run/netns/victim
+Environment=PYTHONPATH=/opt/victim-lab/src
+Environment=SYSLOG_HOST=10.20.0.2
+EnvironmentFile=/etc/victim-lab/http.env
+EnvironmentFile=/etc/victim-lab/experiment.env
+ExecStart=/opt/victim-lab/.venv/bin/gunicorn --bind 10.20.0.2:8080 --workers 2 --threads 2 --timeout 30 --error-logfile - victim_lab.http.app:app
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
