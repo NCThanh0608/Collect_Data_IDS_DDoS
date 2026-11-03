@@ -123,7 +123,7 @@ if ! ip netns list | awk '$1 == "victim" { found = 1 } END { exit !found }'; the
         fi
     fi
     if ip link show dev veth-vic >/dev/null 2>&1; then
-        echo "veth-vic already exists outside namespace victim; inspect the Pi network first." >&2
+        echo "veth-vic already exists outside namespace victim; inspect the Ubuntu Server network first." >&2
         exit 1
     fi
 
@@ -156,9 +156,9 @@ if ! ip netns list | awk '$1 == "victim" { found = 1 } END { exit !found }'; the
         overlapping_routes=""
     fi
     if [[ -n "$overlapping_routes" ]]; then
-        echo "Cannot use $lab_subnet: the following Pi route overlaps it:" >&2
+        echo "Cannot use $lab_subnet: the following Ubuntu Server route overlaps it:" >&2
         echo "$overlapping_routes" >&2
-        echo "Deleting it could disconnect the Pi or another network. Check the interface before removing it." >&2
+        echo "Deleting it could disconnect the Ubuntu Server or another network. Check the interface before removing it." >&2
         exit 1
     fi
 
@@ -194,7 +194,7 @@ sys.exit(0 if valid else 1)
         fi
         overlapping_routes=$(route_conflicts "veth-pi")
         if [[ -n "$overlapping_routes" ]]; then
-            echo "Cannot switch victim to $lab_subnet; another Pi route overlaps it:" >&2
+            echo "Cannot switch victim to $lab_subnet; another Ubuntu Server route overlaps it:" >&2
             echo "$overlapping_routes" >&2
             exit 1
         fi
@@ -244,7 +244,7 @@ if len(networks) == 1:
         if [[ -n "$router_lan_subnet" && "$router_lan_subnet" != "$lab_subnet" ]]; then
             sysctl -w net.ipv4.ip_forward=1 >/dev/null
             ip -n victim route replace "$router_lan_subnet" via "$lab_host_ip"
-            echo "Router LAN $router_lan_subnet can reach victim through this Pi when the router has a static route."
+            echo "Router LAN $router_lan_subnet can reach victim through this Ubuntu Server when the router has a static route."
         fi
     fi
 fi

@@ -8,7 +8,7 @@
   <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
 </head>
 <body>
-  <main class="dashboard" data-status-url="{{ url_for('syslog_status') }}" data-probe-url="{{ url_for('syslog_probe') }}" data-clear-url="{{ url_for('syslog_clear') }}" data-clear-token="{{ clear_token }}">
+  <main class="dashboard" data-status-url="{{ url_for('syslog_status') }}" data-network-url="{{ url_for('network_status') }}" data-probe-url="{{ url_for('syslog_probe') }}" data-clear-url="{{ url_for('syslog_clear') }}" data-clear-token="{{ clear_token }}">
     <header class="dashboard-header">
       <div>
         <div class="eyebrow">VICTIM LAB</div>
@@ -54,13 +54,23 @@
         <div class="cleanup-controls">
           <div>
             <strong>Dọn dữ liệu Syslog</strong>
-            <p>Xóa bản tin và thống kê Syslog đã lưu trên Pi. Dữ liệu metrics vẫn được giữ.</p>
+            <p>Xóa bản tin và thống kê Syslog đã lưu trên Ubuntu Server. Dữ liệu metrics vẫn được giữ.</p>
           </div>
           <button id="clear-button" class="danger-button" type="button">Xóa toàn bộ Syslog</button>
         </div>
         <p id="clear-result" class="probe-result" aria-live="polite"></p>
       </section>
     </div>
+
+    <section class="service-panel network-panel" aria-labelledby="icmp-title">
+      <div class="eyebrow">MẠNG VICTIM</div>
+      <h2 id="icmp-title">ICMPv4</h2>
+      <div class="metric network-metric">
+        <span>Gói ICMP nhận/giây</span>
+        <strong id="icmp-receive-rate">—</strong>
+      </div>
+      <p class="panel-description">Tốc độ trung bình giữa hai lần lấy mẫu trong namespace victim (mặc định 5 giây).</p>
+    </section>
 
     <section class="service-panel log-panel" aria-labelledby="recent-title">
       <div class="service-heading">

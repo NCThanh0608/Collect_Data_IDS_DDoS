@@ -1,4 +1,4 @@
-"""Validate the lab subnet and derive the Pi/victim addresses."""
+"""Validate the lab subnet and derive the Ubuntu Server/victim addresses."""
 
 import ipaddress
 import sys

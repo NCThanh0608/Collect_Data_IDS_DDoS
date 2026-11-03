@@ -1,4 +1,4 @@
-# Victim Lab trên Raspberry Pi 4
+# Victim Lab trên Ubuntu Server
 
 Project chạy web HTTP và một máy chủ UDP Syslog thật trong network namespace `victim`. Dashboard giữ trang đăng nhập hiện có, hiển thị thẻ HTTP, thẻ Syslog và tối đa 20 bản tin gần nhất. Collector ghi chỉ số máy, mạng và Syslog để quan sát thí nghiệm trong WAN ảo.
 
@@ -10,7 +10,7 @@ src/victim_lab/syslog/     Đọc chỉ số, đọc log và gửi bản tin th�
 src/victim_lab/monitor/    Collector JSONL
 deploy/rsyslog/            Cấu hình rsyslog riêng của lab
 deploy/logrotate/          Xoay file thống kê rsyslog
-deploy/systemd/           Các unit khởi động cùng Pi
+deploy/systemd/           Các unit khởi động cùng Ubuntu Server
 scripts/                  Cài dependency, triển khai, xoay log, kiểm tra subnet
 config/                   Subnet lab mặc định
 tests/                    Kiểm thử ứng dụng và cấu hình mạng
@@ -19,7 +19,7 @@ requirements.txt          Dependency Python
 
 ## Cài và triển khai
 
-Yêu cầu Raspberry Pi OS/Linux với `systemd` 248 trở lên, Python 3, quyền `sudo` và kết nối Internet khi cài dependency. Chạy từ thư mục project trên Pi:
+Yêu cầu Ubuntu Server với `systemd` 248 trở lên, Python 3, quyền `sudo` và kết nối Internet khi cài dependency. Chạy từ thư mục project trên Ubuntu Server:
 
 ```bash
 sudo bash scripts/install_deps.sh
@@ -32,11 +32,11 @@ trước khi kiểm tra cấu hình. Nếu bản cài cũ báo `could not open c
 Permission denied`, cập nhật project và chạy lại `sudo bash scripts/setup_pi.sh`.
 Không cần tắt AppArmor.
 
-`install_deps.sh` cài rsyslog và dependency Python vào `/opt/victim-lab/.venv`; bước này không đổi mạng hoặc khởi động service. `setup_pi.sh` dựng hoặc kiểm tra namespace, chép mã, kiểm tra cấu hình rsyslog, cài unit và bật chúng khi Pi khởi động. Khi chỉ cập nhật mã hoặc giao diện, chạy lại `setup_pi.sh` là đủ. Bản triển khai mới dừng và gỡ unit CoAP cũ; các file metrics đã thu trước đó vẫn được giữ.
+`install_deps.sh` cài rsyslog và dependency Python vào `/opt/victim-lab/.venv`; bước này không đổi mạng hoặc khởi động service. `setup_pi.sh` dựng hoặc kiểm tra namespace, chép mã, kiểm tra cấu hình rsyslog, cài unit và bật chúng khi Ubuntu Server khởi động. Khi chỉ cập nhật mã hoặc giao diện, chạy lại `setup_pi.sh` là đủ. Bản triển khai mới dừng và gỡ unit CoAP cũ; các file metrics đã thu trước đó vẫn được giữ.
 
-Nếu router hoặc client còn dùng IP LAN của Pi làm DNS, đổi sang máy chủ DNS khác đang hoạt động trước khi nâng cấp. Project không còn tiến trình phục vụ cổng 53.
+Nếu router hoặc client còn dùng IP LAN của Ubuntu Server làm DNS, đổi sang máy chủ DNS khác đang hoạt động trước khi nâng cấp. Project không còn tiến trình phục vụ cổng 53.
 
-Địa chỉ mặc định là `10.20.0.1/24` trên Pi host và `10.20.0.2/24` trong namespace `victim`. Script tự tạo cặp veth nếu chưa có namespace. Nếu topology WAN ảo riêng đã tạo namespace, cần gán sẵn IP máy đích và route phù hợp. Script từ chối dải mạng trùng route khác trên Pi.
+Địa chỉ mặc định là `10.20.0.1/24` trên host Ubuntu Server và `10.20.0.2/24` trong namespace `victim`. Script tự tạo cặp veth nếu chưa có namespace. Nếu topology WAN ảo riêng đã tạo namespace, cần gán sẵn IP máy đích và route phù hợp. Script từ chối dải mạng trùng route khác trên Ubuntu Server.
 
 Để đổi dải mạng:
 
@@ -44,23 +44,23 @@ Nếu router hoặc client còn dùng IP LAN của Pi làm DNS, đổi sang máy
 sudo bash scripts/setup_pi.sh --subnet 10.30.0.0/24
 ```
 
-Chọn dải IPv4 private `/24` chưa trùng. Script dùng `.1` cho Pi, `.2` cho victim và cập nhật địa chỉ bind của HTTP, Syslog. Nếu router có static route đến dải cũ, sửa route đến dải mới qua IP LAN ổn định của Pi.
+Chọn dải IPv4 private `/24` chưa trùng. Script dùng `.1` cho Ubuntu Server, `.2` cho victim và cập nhật địa chỉ bind của HTTP, Syslog. Nếu router có static route đến dải cũ, sửa route đến dải mới qua IP LAN ổn định của Ubuntu Server.
 
 ## Truy cập web và gửi Syslog
 
-Với dải mặc định, mở `http://10.20.0.2:8080/login`, đăng nhập `admin/admin`. Dashboard cập nhật khoảng 3 giây/lần. Thẻ Syslog cho biết số bản tin đã nhận, bản tin/giây, số bị rsyslog từ chối, số bị hàng đợi loại bỏ và lỗi nhận UDP của kernel trong namespace. Danh sách chỉ tải 20 log gần nhất; mỗi nội dung hiển thị tối đa 500 ký tự và được đưa vào trang dưới dạng văn bản.
+Với dải mặc định, mở `http://10.20.0.2:8080/login`, đăng nhập `admin/admin`. Dashboard cập nhật khoảng 3 giây/lần. Thẻ Syslog cho biết số bản tin đã nhận, bản tin/giây, số bị rsyslog từ chối, số bị hàng đợi loại bỏ và lỗi nhận UDP của kernel trong namespace. Thẻ ICMPv4 hiển thị số gói nhận trung bình mỗi giây, tính từ chênh lệch bộ đếm kernel `Icmp: InMsgs` giữa hai mẫu collector (mặc định cách nhau 5 giây). Đây là mọi loại ICMPv4 nhận trong namespace `victim`, không chỉ Echo Request; khi chưa có hai mẫu mới hoặc collector ngừng cập nhật, thẻ hiển thị `—`. Danh sách chỉ tải 20 log gần nhất; mỗi nội dung hiển thị tối đa 500 ký tự và được đưa vào trang dưới dạng văn bản.
 
 Nút **Gửi thử bản tin Syslog** gửi UDP từ web server, rồi chờ thấy mã bản tin trong log mới báo “đã nhận”. Nó kiểm tra đường nội bộ web → Syslog. Để kiểm tra tuyến PC → router → victim, cấu hình client trên PC gửi Syslog đến `10.20.0.2:514/udp`.
 
-Ví dụ Pi có LAN IP cố định `192.168.1.146` và router phục vụ `192.168.1.0/24`: đặt static route trên router với đích `10.20.0.0/24`, gateway `192.168.1.146`, interface LAN. Pi và namespace cần route hai chiều; script cấu hình phần này khi nó quản lý cặp veth. Trang web dùng TCP 8080; client gửi log trực tiếp dùng UDP 514. Chỉ cho phép các cổng này trong lab, không chuyển tiếp từ Internet công cộng. Không đặt IP Pi trong vùng DHCP có thể cấp cho máy khác.
+Ví dụ Ubuntu Server có LAN IP cố định `192.168.1.146` và router phục vụ `192.168.1.0/24`: đặt static route trên router với đích `10.20.0.0/24`, gateway `192.168.1.146`, interface LAN. Ubuntu Server và namespace cần route hai chiều; script cấu hình phần này khi nó quản lý cặp veth. Trang web dùng TCP 8080; client gửi log trực tiếp dùng UDP 514. Chỉ cho phép các cổng này trong lab, không chuyển tiếp từ Internet công cộng. Không đặt IP Ubuntu Server trong vùng DHCP có thể cấp cho máy khác.
 
-Kiểm tra trên Pi:
+Kiểm tra trên Ubuntu Server:
 
 ```bash
 sudo systemctl status victim-netns victim-http victim-syslog victim-monitor --no-pager
 sudo systemctl is-enabled victim-netns victim-http victim-syslog victim-monitor
 sudo rsyslogd -N1 -f /opt/victim-lab/rsyslog/victim.conf
-sudo ip netns exec victim logger --udp --server 10.20.0.2 --port 514 --tag lab-test "hello from Pi"
+sudo ip netns exec victim logger --udp --server 10.20.0.2 --port 514 --tag lab-test "hello from Ubuntu Server"
 ```
 
 Thay địa chỉ `.2` nếu đã đổi subnet. Sau khi gửi, kiểm tra thẻ Syslog hoặc `sudo tail /var/log/victim-lab/syslog.jsonl`. Nếu trang báo chưa có số liệu ngay sau khi khởi động, chờ chu kỳ `impstats` đầu tiên, khoảng 5 giây.
@@ -77,26 +77,26 @@ Rsyslog 8.2504 cần mẫu ghi JSONL có dấu xuống dòng nằm ngoài object
 
 Nếu không sửa được thiết bị gửi, không dùng trường `msg` làm khóa đối chiếu: trường này có thể rỗng, chứa byte không phải UTF-8 hoặc đã bị rsyslog biến đổi. Bản ghi mới có thêm `received_at_utc` (thời điểm rsyslog nhận) và `source_port`. Để đối chiếu payload, thu PCAP ở cả cổng ra router và cổng vào namespace victim trong cùng khoảng thời gian.
 
-Trên Pi, từ thư mục project chạy lại setup để áp dụng mẫu log mới. Cài `tcpdump` trên Pi và router nếu chưa có (lệnh dưới đây dành cho Debian/Ubuntu):
+Trên Ubuntu Server, từ thư mục project chạy lại setup để áp dụng mẫu log mới. Cài `tcpdump` trên Ubuntu Server và router nếu chưa có (lệnh dưới đây dành cho Debian/Ubuntu):
 
 ```bash
 sudo bash scripts/setup_pi.sh
 sudo apt-get install tcpdump
 ```
 
-Trên router Linux, dùng `ip route get 10.20.0.2` để tìm interface đi tới Pi, rồi thay `<egress-iface>` trong lệnh sau:
+Trên router Linux, dùng `ip route get 10.20.0.2` để tìm interface đi tới Ubuntu Server, rồi thay `<egress-iface>` trong lệnh sau:
 
 ```bash
 sudo tcpdump -i <egress-iface> -Q out -s 0 -w /tmp/router-syslog.pcap 'udp and dst host 10.20.0.2 and dst port 514'
 ```
 
-Đồng thời trên Pi:
+Đồng thời trên Ubuntu Server:
 
 ```bash
 sudo ip netns exec victim tcpdump -i veth-vic -Q in -s 0 -w /tmp/victim-syslog.pcap 'udp and dst host 10.20.0.2 and dst port 514'
 ```
 
-Dừng cả hai lệnh bằng Ctrl+C sau thí nghiệm, rồi chép `/tmp/router-syslog.pcap` từ router sang `/tmp/router-syslog.pcap` trên Pi. Từ thư mục project trên Pi, tạo môi trường phân tích riêng và chạy:
+Dừng cả hai lệnh bằng Ctrl+C sau thí nghiệm, rồi chép `/tmp/router-syslog.pcap` từ router sang `/tmp/router-syslog.pcap` trên Ubuntu Server. Từ thư mục project trên Ubuntu Server, tạo môi trường phân tích riêng và chạy:
 
 ```bash
 python3 -m venv .venv-analysis
@@ -142,7 +142,7 @@ python -m unittest discover -s tests -v
 `192.168.1.1`: Router để định tuyến từ các device trong LAN -> WAN
 `192.168.1.146`: Gateway trỏ đến WAN ảo
 `10.20.0.0/24`: Mạng WAN ảo
-`10.20.0.1`: đầu veth-pi ở Ubuntu host. Nó làm gateway cho máy ảo mạng.
+`10.20.0.1`: đầu `veth-pi` trên host Ubuntu Server. Nó làm gateway cho máy ảo mạng.
 `10.20.0.2`: đầu veth-vic trong network namespace victim. Web chạy tại `10.20.0.2:8080`, Syslog nhận tại `10.20.0.2:514`/UDP.
 ## Mô hình demo:
 Các `device IoT` sẽ được kết nối tới `WAN server` thông qua 1 router có địa chỉ `192.168.1.1/24`.

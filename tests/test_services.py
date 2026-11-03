@@ -23,11 +23,12 @@ os.environ["EXPERIMENT_ID"] = "test-run"
 
 from network_config import addresses  # noqa: E402
 from victim_lab.http.app import access_logger, app  # noqa: E402
-from victim_lab.monitor.collect import UnlimitedRotatingFileHandler, sample  # noqa: E402
+from victim_lab.monitor.collect import UnlimitedRotatingFileHandler, read_snmp_counters, sample  # noqa: E402
 from victim_lab.syslog.clear import clear_syslog_data  # noqa: E402
 from victim_lab.syslog.probe import send_probe  # noqa: E402
 from victim_lab.syslog.reader import (  # noqa: E402
     dashboard_status,
+    read_icmp_rate,
     read_kernel_udp_errors,
     read_rate,
     read_rsyslog_stats,
@@ -51,6 +52,7 @@ class HttpTests(unittest.TestCase):
             page = client.get("/dashboard").get_data(as_text=True)
             self.assertIn("Syslog", page)
             self.assertIn("HTTP", page)
+            self.assertIn('id="icmp-receive-rate"', page)
             self.assertEqual(client.post("/logout").status_code, 302)
 
     def test_access_log_does_not_include_query_or_password(self):
@@ -73,6 +75,16 @@ class HttpTests(unittest.TestCase):
 
 
 class SyslogDashboardTests(unittest.TestCase):
+    def test_network_status_requires_login_and_does_not_depend_on_syslog(self):
+        with app.test_client() as client:
+            self.assertEqual(client.get("/api/network/status").status_code, 401)
+            client.post("/login", data={"username": "labuser", "password": "correct-password"})
+            with patch("victim_lab.http.app.read_icmp_rate", return_value=2.5), \
+                 patch("victim_lab.http.app.dashboard_status", side_effect=RuntimeError("stale")):
+                response = client.get("/api/network/status")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json["icmp_rate_per_second"], 2.5)
+
     def test_clear_requires_login_and_csrf_and_clears_only_syslog_files(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -135,6 +147,28 @@ class SyslogDashboardTests(unittest.TestCase):
 
 
 class SyslogReaderTests(unittest.TestCase):
+    def test_icmp_rate_handles_missing_reset_and_stale_samples(self):
+        with tempfile.TemporaryDirectory() as directory:
+            metrics = Path(directory) / "metrics.jsonl"
+            now = datetime.now(timezone.utc)
+            records = [
+                {"timestamp_utc": (now - timedelta(seconds=5)).isoformat(),
+                 "icmp": {"InMsgs": 10}},
+                {"timestamp_utc": now.isoformat(), "icmp": {"InMsgs": 20}},
+            ]
+            metrics.write_text("\n".join(json.dumps(item) for item in records) + "\n", encoding="utf-8")
+            self.assertEqual(read_icmp_rate(metrics), 2.0)
+            records[-1]["icmp"]["InMsgs"] = 2
+            metrics.write_text("\n".join(json.dumps(item) for item in records) + "\n", encoding="utf-8")
+            self.assertIsNone(read_icmp_rate(metrics))
+            records[-1].pop("icmp")
+            metrics.write_text("\n".join(json.dumps(item) for item in records) + "\n", encoding="utf-8")
+            self.assertIsNone(read_icmp_rate(metrics))
+            records[-1]["icmp"] = {"InMsgs": 20}
+            records[-1]["timestamp_utc"] = (now - timedelta(seconds=30)).isoformat()
+            metrics.write_text("\n".join(json.dumps(item) for item in records) + "\n", encoding="utf-8")
+            self.assertIsNone(read_icmp_rate(metrics))
+
     def test_recent_messages_reads_newest_unlimited_archives(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -259,6 +293,15 @@ class SyslogReaderTests(unittest.TestCase):
 
 
 class MonitorTests(unittest.TestCase):
+    def test_reads_icmp_kernel_counter(self):
+        with tempfile.TemporaryDirectory() as directory:
+            snmp = Path(directory) / "snmp"
+            snmp.write_text(
+                "Icmp: InMsgs InErrors OutMsgs\nIcmp: 123 4 5\n"
+                "Udp: InDatagrams InErrors\nUdp: 42 1\n", encoding="utf-8"
+            )
+            self.assertEqual(read_snmp_counters("Icmp", snmp)["InMsgs"], 123)
+
     def test_metrics_rotation_keeps_more_than_three_archives(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "metrics.jsonl"
@@ -285,11 +328,13 @@ class MonitorTests(unittest.TestCase):
              patch("victim_lab.monitor.collect.read_memory", return_value={}), \
              patch("victim_lab.monitor.collect.read_interfaces", return_value={}), \
              patch("victim_lab.monitor.collect.read_udp_counters", return_value={}), \
+             patch("victim_lab.monitor.collect.read_icmp_counters", return_value={"InMsgs": 8}), \
              patch("victim_lab.monitor.collect.read_tcp_connections", return_value={}), \
              patch("victim_lab.monitor.collect.read_temperature", return_value=None), \
              patch("victim_lab.monitor.collect.read_rsyslog_stats", return_value={"received_total": 7}):
             _, record = sample((100, 30), "run-1", Path(directory) / "metrics.jsonl")
         self.assertEqual(record["syslog"]["received_total"], 7)
+        self.assertEqual(record["icmp"]["InMsgs"], 8)
 
 
 class NetworkConfigTests(unittest.TestCase):

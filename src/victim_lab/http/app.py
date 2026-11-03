@@ -12,7 +12,7 @@ from werkzeug.security import check_password_hash
 
 from victim_lab.syslog.clear import clear_syslog_data
 from victim_lab.syslog.probe import send_probe
-from victim_lab.syslog.reader import dashboard_status
+from victim_lab.syslog.reader import dashboard_status, read_icmp_rate
 
 
 def required_env(name):
@@ -112,6 +112,17 @@ def syslog_status():
     except Exception as exc:
         app.logger.warning("Syslog status unavailable: %s", exc)
         return jsonify(error="Syslog metrics unavailable"), 503
+
+
+@app.get("/api/network/status")
+def network_status():
+    if not session.get("logged_in"):
+        return jsonify(error="unauthorized"), 401
+    try:
+        return jsonify(icmp_rate_per_second=read_icmp_rate())
+    except OSError as exc:
+        app.logger.warning("Network metrics unavailable: %s", exc)
+        return jsonify(error="Network metrics unavailable"), 503
 
 
 @app.post("/api/syslog/probe")

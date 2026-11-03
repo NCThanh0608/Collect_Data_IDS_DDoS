@@ -61,14 +61,23 @@ def read_interfaces():
     return result
 
 
-def read_udp_counters():
-    lines = Path("/proc/net/snmp").read_text().splitlines()
+def read_snmp_counters(section, path=Path("/proc/net/snmp")):
+    lines = Path(path).read_text().splitlines()
     for header, values in zip(lines, lines[1:]):
-        if header.startswith("Udp:") and values.startswith("Udp:"):
+        label = f"{section}:"
+        if header.startswith(label) and values.startswith(label):
             keys = header.split()[1:]
             numbers = [int(value) for value in values.split()[1:]]
             return dict(zip(keys, numbers))
     return {}
+
+
+def read_udp_counters():
+    return read_snmp_counters("Udp")
+
+
+def read_icmp_counters():
+    return read_snmp_counters("Icmp")
 
 
 def read_tcp_connections():
@@ -100,6 +109,7 @@ def sample(previous_cpu, experiment_id, log_path):
         "temperature_celsius": read_temperature(),
         "interfaces": read_interfaces(),
         "udp": read_udp_counters(),
+        "icmp": read_icmp_counters(),
         "tcp_connections": read_tcp_connections(),
         "disk_free_bytes": shutil.disk_usage(log_path.parent).free,
     }

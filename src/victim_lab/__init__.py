@@ -1,1 +1,1 @@
-"""Services for the Raspberry Pi victim lab."""
+"""Services for the Ubuntu Server victim lab."""

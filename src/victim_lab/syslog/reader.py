@@ -202,6 +202,22 @@ def read_kernel_udp_errors(path=METRICS_FILE):
         return None
 
 
+def read_icmp_rate(path=METRICS_FILE):
+    samples = _fresh_monitor_samples(path)
+    if len(samples) < 2:
+        return None
+    before, after = samples[-2:]
+    try:
+        seconds = (
+            datetime.fromisoformat(after["timestamp_utc"])
+            - datetime.fromisoformat(before["timestamp_utc"])
+        ).total_seconds()
+        delta = int(after["icmp"]["InMsgs"]) - int(before["icmp"]["InMsgs"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    return round(delta / seconds, 1) if seconds > 0 and delta >= 0 else None
+
+
 def dashboard_status():
     stats = read_rsyslog_stats()
     try:

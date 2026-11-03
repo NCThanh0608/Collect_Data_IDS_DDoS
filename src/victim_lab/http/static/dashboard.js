@@ -15,6 +15,7 @@
     result: document.getElementById("probe-result"),
     clear: document.getElementById("clear-button"),
     clearResult: document.getElementById("clear-result"),
+    icmpRate: document.getElementById("icmp-receive-rate"),
   };
   let pendingProbe = null;
 
@@ -81,6 +82,19 @@
     }
   }
 
+  async function refreshNetwork() {
+    try {
+      const response = await fetch(dashboard.dataset.networkUrl, { cache: "no-store" });
+      if (!response.ok) throw new Error("Network metrics unavailable");
+      const data = await response.json();
+      elements.icmpRate.textContent = data.icmp_rate_per_second == null
+        ? "—"
+        : Number(data.icmp_rate_per_second).toLocaleString("vi-VN");
+    } catch (_) {
+      elements.icmpRate.textContent = "—";
+    }
+  }
+
   elements.probe.addEventListener("click", async () => {
     elements.probe.disabled = true;
     try {
@@ -120,5 +134,7 @@
   });
 
   refresh();
+  refreshNetwork();
   setInterval(refresh, 3000);
+  setInterval(refreshNetwork, 3000);
 })();

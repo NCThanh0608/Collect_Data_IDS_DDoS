@@ -49,6 +49,10 @@ button:disabled{opacity:.55;cursor:wait}
 .dashboard-cards .service-panel h2{font-size:23px;margin:7px 0 16px}
 .panel-description{font-size:14px;line-height:1.6;color:#617085;margin-top:24px}
 .log-panel{margin-top:16px}
+.network-panel{margin-top:16px}
+.network-panel h2{font-size:23px;margin:7px 0 0}
+.network-metric{max-width:260px;margin-top:20px}
+.network-panel .panel-description{margin:14px 0 0}
 .log-list{list-style:none;padding:0;margin:20px 0 0;max-height:440px;overflow:auto}
 .log-list li{padding:12px 0;border-top:1px solid #edf0f4}
 .log-detail{display:block;color:#64748b;font-size:12px;margin-bottom:5px;overflow-wrap:anywhere}
