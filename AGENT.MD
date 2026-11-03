@@ -20,6 +20,7 @@ Duy trì máy đích Raspberry Pi 4 trong WAN ảo do người vận hành kiể
 1. Bind HTTP tại IP victim cổng TCP 8080 và rsyslog tại IP victim cổng UDP 514 trong namespace. Script kiểm tra route trùng trước khi cấu hình mạng; router cần static route qua Pi nếu client LAN truy cập dải victim.
 2. Rsyslog dùng cấu hình riêng và chỉ nhận đầu vào `imudp` của lab. Log gửi đến được lưu thành JSONL với tên file cố định, không lấy đường dẫn file từ nội dung do sender cung cấp. Xoay log theo dung lượng và giữ không giới hạn bản cũ.
 3. `impstats` xuất bộ đếm định kỳ ra file riêng, không đẩy lại vào luồng Syslog. Dashboard trình bày rõ `received`, `disallowed`, queue drops và lỗi nhận UDP của kernel là các bộ đếm khác nhau. File thống kê được logrotate xoay vòng.
+   Bản ghi Syslog lưu `received_at_utc` và `source_port` để đối chiếu thụ động với PCAP; không dùng `msg` làm khóa so byte.
 4. Dashboard giữ đăng nhập, header và logout hiện có; có thẻ HTTP, thẻ Syslog và tối đa 20 bản tin gần nhất. API chỉ trả dữ liệu cho phiên đã đăng nhập. Giới hạn độ dài từng trường và hiển thị bằng văn bản đã escape; không render log như HTML.
 5. Nút thử gửi một bản tin Syslog UDP có mã ngẫu nhiên. Giao diện chỉ báo “đã nhận” sau khi thấy mã trong log; thao tác `sendto` thành công chỉ là “đã gửi”.
 6. Collector ghi UTC timestamp, `experiment_id`, CPU/RAM/nhiệt độ, network RX/TX/drops, UDP/TCP và snapshot Syslog. Nếu Syslog lỗi, ghi `syslog_error` và tiếp tục lấy mẫu. Xoay metrics theo dung lượng và giữ không giới hạn bản cũ.

@@ -73,6 +73,45 @@ sudo tail -n 1 /var/log/victim-lab/syslog.jsonl | python3 -m json.tool
 
 Rsyslog 8.2504 cần mẫu ghi JSONL có dấu xuống dòng nằm ngoài object JSON. Bản cấu hình trước từng ghi dấu phẩy thừa và dấu `}` ở dòng riêng; bản đọc mới vẫn hiển thị được các bản tin cũ đó, còn bản ghi mới sẽ là một JSON hợp lệ trên mỗi dòng.
 
+## Đối chiếu PCAP router với Syslog
+
+Nếu không sửa được thiết bị gửi, không dùng trường `msg` làm khóa đối chiếu: trường này có thể rỗng, chứa byte không phải UTF-8 hoặc đã bị rsyslog biến đổi. Bản ghi mới có thêm `received_at_utc` (thời điểm rsyslog nhận) và `source_port`. Để đối chiếu payload, thu PCAP ở cả cổng ra router và cổng vào namespace victim trong cùng khoảng thời gian.
+
+Trên Pi, từ thư mục project chạy lại setup để áp dụng mẫu log mới. Cài `tcpdump` trên Pi và router nếu chưa có (lệnh dưới đây dành cho Debian/Ubuntu):
+
+```bash
+sudo bash scripts/setup_pi.sh
+sudo apt-get install tcpdump
+```
+
+Trên router Linux, dùng `ip route get 10.20.0.2` để tìm interface đi tới Pi, rồi thay `<egress-iface>` trong lệnh sau:
+
+```bash
+sudo tcpdump -i <egress-iface> -Q out -s 0 -w /tmp/router-syslog.pcap 'udp and dst host 10.20.0.2 and dst port 514'
+```
+
+Đồng thời trên Pi:
+
+```bash
+sudo ip netns exec victim tcpdump -i veth-vic -Q in -s 0 -w /tmp/victim-syslog.pcap 'udp and dst host 10.20.0.2 and dst port 514'
+```
+
+Dừng cả hai lệnh bằng Ctrl+C sau thí nghiệm, rồi chép `/tmp/router-syslog.pcap` từ router sang `/tmp/router-syslog.pcap` trên Pi. Từ thư mục project trên Pi, tạo môi trường phân tích riêng và chạy:
+
+```bash
+python3 -m venv .venv-analysis
+.venv-analysis/bin/pip install -r requirements-analysis.txt
+sudo .venv-analysis/bin/python scripts/compare_syslog_capture.py \
+  --router /tmp/router-syslog.pcap \
+  --victim /tmp/victim-syslog.pcap \
+  --log-dir /var/log/victim-lab \
+  --dst-ip 10.20.0.2
+```
+
+Nếu phân tích trên PC, chép `syslog.jsonl` và các bản xoay vào một thư mục rồi truyền thư mục đó qua `--log-dir`. Công cụ so IP/port nguồn cùng SHA-256 của toàn bộ UDP payload theo số lần xuất hiện; không giải mã `msg`. Vì vậy cần capture tại cổng ra router sau NAT và cổng vào victim, trước khi có thiết bị khác sửa IP/port. `router_only` là số datagram thấy ở router nhưng không thấy ở victim. `rsyslog.written_in_window` là số dòng log có thời điểm nhận và cặp IP/port nguồn trùng với PCAP victim trong khoảng đo (mặc định cộng biên 2 giây). Điều chỉnh `--margin-seconds` nếu cần. File log cũ chưa có `received_at_utc` không thể đối chiếu theo thời điểm nhận. Nếu capture bị cắt ngắn hoặc có IP fragment, công cụ báo số lượng và bỏ chúng khỏi phép so.
+
+Không có ID do sender gắn vào thì nhiều datagram có payload giống hệt nhau chỉ so được theo số lượng, và không thể khẳng định dòng rsyslog nào ứng với datagram cụ thể nào. `maxMessageSize` hiện là 2 KiB nên nội dung bản tin dài hơn có thể bị cắt trong rsyslog; PCAP vẫn giữ byte gốc nếu dùng `-s 0`.
+
 ## Chỉ số và log
 
 - `/var/log/victim-lab/syslog.jsonl`: bản tin Syslog dạng JSONL, xoay khi đạt khoảng 20 MiB. Bản cũ có hậu tố thời gian UTC và mã duy nhất; không tự xóa bản nào. Các bản `.1`–`.3` từ trước vẫn được giữ.
