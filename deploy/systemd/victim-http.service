@@ -20,6 +20,7 @@ NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
 PrivateTmp=true
+ReadWritePaths=/var/log/victim-lab
 
 [Install]
 WantedBy=multi-user.target

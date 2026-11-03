@@ -8,7 +8,7 @@
   <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
 </head>
 <body>
-  <main class="dashboard" data-status-url="{{ url_for('syslog_status') }}" data-probe-url="{{ url_for('syslog_probe') }}">
+  <main class="dashboard" data-status-url="{{ url_for('syslog_status') }}" data-probe-url="{{ url_for('syslog_probe') }}" data-clear-url="{{ url_for('syslog_clear') }}" data-clear-token="{{ clear_token }}">
     <header class="dashboard-header">
       <div>
         <div class="eyebrow">VICTIM LAB</div>
@@ -51,6 +51,14 @@
           <button id="probe-button" type="button">Gửi thử bản tin Syslog</button>
         </div>
         <p id="probe-result" class="probe-result" aria-live="polite">Nút thử gửi một bản tin UDP từ web server.</p>
+        <div class="cleanup-controls">
+          <div>
+            <strong>Dọn dữ liệu Syslog</strong>
+            <p>Xóa bản tin và thống kê Syslog đã lưu trên Pi. Dữ liệu metrics vẫn được giữ.</p>
+          </div>
+          <button id="clear-button" class="danger-button" type="button">Xóa toàn bộ Syslog</button>
+        </div>
+        <p id="clear-result" class="probe-result" aria-live="polite"></p>
       </section>
     </div>
 

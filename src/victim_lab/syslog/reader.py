@@ -1,6 +1,7 @@
 """Read bounded rsyslog statistics and recent messages for the dashboard."""
 
 import json
+import re
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -12,6 +13,22 @@ MESSAGES_FILE = LOG_DIR / "syslog.jsonl"
 METRICS_FILE = LOG_DIR / "metrics.jsonl"
 MAX_TAIL_BYTES = 256 * 1024
 LOG_ROTATION_LIMIT_BYTES = 20 * 1024 * 1024
+MESSAGE_BACKUP_NAME = re.compile(r"syslog\.jsonl\.(?:[1-9]\d*|\d{8}T\d{6}Z\.\d+\.\d+)\Z")
+METRICS_BACKUP_NAME = re.compile(r"metrics\.jsonl\.(?:[1-9]\d*|\d{8}T\d{12}Z\.[0-9a-f]{32})\Z")
+
+
+def _newest_backups(path, name_pattern):
+    backups = []
+    try:
+        for candidate in path.parent.iterdir():
+            if name_pattern.fullmatch(candidate.name):
+                try:
+                    backups.append((candidate.stat().st_mtime_ns, candidate))
+                except FileNotFoundError:
+                    continue
+    except FileNotFoundError:
+        return []
+    return [candidate for _, candidate in sorted(backups, reverse=True)]
 
 
 def _tail_lines(path, max_bytes=MAX_TAIL_BYTES):
@@ -92,7 +109,11 @@ def _display_text(value, limit):
 def recent_messages(path=MESSAGES_FILE, limit=20):
     path = Path(path)
     records = []
-    for candidate in (path, Path(str(path) + ".1")):
+    def candidates():
+        yield path
+        yield from _newest_backups(path, MESSAGE_BACKUP_NAME)
+
+    for candidate in candidates():
         try:
             lines = _tail_lines(candidate)
         except FileNotFoundError:
@@ -130,10 +151,20 @@ def recent_messages(path=MESSAGES_FILE, limit=20):
 
 
 def _fresh_monitor_samples(path, max_age_seconds=20):
+    path = Path(path)
     try:
         samples = list(_json_objects(path))
     except FileNotFoundError:
-        return []
+        samples = []
+    if len(samples) < 2:
+        for backup in _newest_backups(path, METRICS_BACKUP_NAME):
+            try:
+                older = list(_json_objects(backup))
+            except FileNotFoundError:
+                continue
+            samples = older[-2:] + samples
+            if len(samples) >= 2:
+                break
     if not samples:
         return []
     try:

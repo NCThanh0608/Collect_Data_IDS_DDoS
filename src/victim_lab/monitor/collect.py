@@ -5,11 +5,27 @@ import logging
 import os
 import shutil
 import time
+import uuid
 from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from victim_lab.syslog.reader import read_rsyslog_stats
+
+
+class UnlimitedRotatingFileHandler(RotatingFileHandler):
+    """Rotate by size without replacing or deleting earlier metrics files."""
+
+    def doRollover(self):
+        if self.stream:
+            self.stream.close()
+            self.stream = None
+        if os.path.exists(self.baseFilename):
+            stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+            archive = f"{self.baseFilename}.{stamp}.{uuid.uuid4().hex}"
+            self.rotate(self.baseFilename, archive)
+        if not self.delay:
+            self.stream = self._open()
 
 
 def read_cpu_ticks():
@@ -103,7 +119,7 @@ def main():
     logger = logging.getLogger("victim.metrics")
     logger.setLevel(logging.INFO)
     logger.addHandler(
-        RotatingFileHandler(log_path, maxBytes=20 * 1024 * 1024, backupCount=3, encoding="utf-8")
+        UnlimitedRotatingFileHandler(log_path, maxBytes=20 * 1024 * 1024, encoding="utf-8")
     )
     previous_cpu = read_cpu_ticks()
     experiment_id = os.environ.get("EXPERIMENT_ID", "unlabeled")

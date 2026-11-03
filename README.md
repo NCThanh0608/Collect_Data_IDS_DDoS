@@ -75,10 +75,14 @@ Rsyslog 8.2504 cần mẫu ghi JSONL có dấu xuống dòng nằm ngoài object
 
 ## Chỉ số và log
 
-- `/var/log/victim-lab/syslog.jsonl`: bản tin Syslog dạng JSONL, xoay khi đạt khoảng 20 MiB. Giữ tối đa ba bản cũ `.1`–`.3`; mỗi lần xoay tiếp theo tự xóa bản cũ nhất.
-- `/var/log/victim-lab/rsyslog-stats.log`: bộ đếm rsyslog, được thêm mỗi 5 giây; logrotate kiểm tra hàng ngày, xoay khi vượt 1 MiB và giữ ba bản cũ.
-- `/var/log/victim-lab/metrics.jsonl`: collector ghi UTC timestamp, `experiment_id`, CPU/RAM/nhiệt độ, network RX/TX/drops, bộ đếm UDP/TCP và snapshot Syslog; xoay ở 20 MiB và giữ ba bản cũ.
+- `/var/log/victim-lab/syslog.jsonl`: bản tin Syslog dạng JSONL, xoay khi đạt khoảng 20 MiB. Bản cũ có hậu tố thời gian UTC và mã duy nhất; không tự xóa bản nào. Các bản `.1`–`.3` từ trước vẫn được giữ.
+- `/var/log/victim-lab/rsyslog-stats.log`: bộ đếm rsyslog, được thêm mỗi 5 giây; logrotate kiểm tra hàng ngày, xoay khi vượt 1 MiB và giữ không giới hạn bản cũ.
+- `/var/log/victim-lab/metrics.jsonl`: collector ghi UTC timestamp, `experiment_id`, CPU/RAM/nhiệt độ, network RX/TX/drops, bộ đếm UDP/TCP và snapshot Syslog; xoay ở 20 MiB và giữ không giới hạn bản cũ.
 - HTTP access log ở `sudo journalctl -u victim-http -o cat`. Log không chứa mật khẩu, cookie, request body hoặc query string.
+
+Trên dashboard, nút **Xóa toàn bộ Syslog** yêu cầu xác nhận rồi xóa nội dung `syslog.jsonl`, `rsyslog-stats.log` và các bản xoay của hai file này. Nút không xóa `metrics.jsonl` hay system journal. File đang được rsyslog mở được cắt về 0 byte tại chỗ, nên dịch vụ tiếp tục ghi bản tin mới. Bộ đếm trong tiến trình rsyslog vẫn tiếp tục tăng; dashboard có thể tạm báo thiếu thống kê cho đến chu kỳ `impstats` tiếp theo (khoảng 5 giây). API xóa yêu cầu phiên đăng nhập và mã CSRF của phiên đó. Để cập nhật bản triển khai hiện có, chạy lại `sudo bash scripts/setup_pi.sh`.
+
+Không còn giới hạn số bản xoay, nên tổng dung lượng các file log có thể tăng đến khi đầy ổ đĩa. Nút xóa Syslog chỉ dọn bản tin và thống kê Syslog; các bản metrics cũ cần được quản lý riêng khi không còn cần cho thí nghiệm.
 
 `Bản tin đã nhận` là số rsyslog đưa vào pipeline, không phải số mà mọi client khẳng định đã gửi. UDP không có xác nhận; gói bị loại trước socket không nằm trong bộ đếm rsyslog. `Nguồn bị chặn` lấy từ các worker `imudp` và luôn bằng 0 khi không cấu hình hạn chế nguồn. `Hàng đợi loại bỏ` chỉ đếm bản tin bị loại ở hàng đợi, không đếm lỗi ghi file. `Lỗi ghi log` lấy từ action `lab_messages`; nếu file chạm ngưỡng 20 MiB mà không xoay được, trạng thái Syslog báo lỗi ghi log. `Lỗi nhận UDP (kernel)` là bộ đếm của cả namespace, không chỉ riêng cổng 514.
 

@@ -13,6 +13,8 @@
     messages: document.getElementById("recent-messages"),
     probe: document.getElementById("probe-button"),
     result: document.getElementById("probe-result"),
+    clear: document.getElementById("clear-button"),
+    clearResult: document.getElementById("clear-result"),
   };
   let pendingProbe = null;
 
@@ -92,6 +94,28 @@
       elements.result.textContent = "Không gửi được bản tin Syslog từ web server.";
     } finally {
       elements.probe.disabled = false;
+    }
+  });
+
+  elements.clear.addEventListener("click", async () => {
+    if (!window.confirm("Xóa toàn bộ bản tin và thống kê Syslog đã lưu? Thao tác này không thể hoàn tác.")) return;
+    elements.clear.disabled = true;
+    elements.clearResult.textContent = "Đang xóa dữ liệu Syslog…";
+    try {
+      const response = await fetch(dashboard.dataset.clearUrl, {
+        method: "POST",
+        headers: { "X-CSRF-Token": dashboard.dataset.clearToken },
+      });
+      if (!response.ok) throw new Error("Clear failed");
+      const data = await response.json();
+      const mib = (data.bytes_cleared / (1024 * 1024)).toLocaleString("vi-VN", { maximumFractionDigits: 2 });
+      elements.clearResult.textContent = `Đã xóa dữ liệu Syslog đã lưu (khoảng ${mib} MiB). Bản tin mới vẫn tiếp tục được ghi; bộ đếm rsyslog sẽ tiếp tục từ phiên chạy hiện tại.`;
+      renderMessages([]);
+      await refresh();
+    } catch (_) {
+      elements.clearResult.textContent = "Không xóa được dữ liệu Syslog. Kiểm tra quyền ghi và nhật ký victim-http.";
+    } finally {
+      elements.clear.disabled = false;
     }
   });
 

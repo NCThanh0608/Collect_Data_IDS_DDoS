@@ -14,7 +14,7 @@ if [[ "$#" -ne 0 ]]; then
 fi
 
 apt-get update
-apt-get install -y iproute2 python3 python3-venv python3-pip ca-certificates rsyslog logrotate
+apt-get install -y iproute2 python3 python3-venv python3-pip ca-certificates rsyslog logrotate util-linux
 
 install -d -m 0755 "$install_dir"
 python3 -m venv "$install_dir/.venv"

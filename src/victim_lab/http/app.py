@@ -1,6 +1,8 @@
+import hmac
 import json
 import logging
 import os
+import secrets
 import time
 import uuid
 from datetime import datetime, timezone
@@ -8,6 +10,7 @@ from datetime import datetime, timezone
 from flask import Flask, g, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash
 
+from victim_lab.syslog.clear import clear_syslog_data
 from victim_lab.syslog.probe import send_probe
 from victim_lab.syslog.reader import dashboard_status
 
@@ -82,6 +85,7 @@ def login():
         ):
             session.clear()
             session["logged_in"] = True
+            session["clear_token"] = secrets.token_urlsafe(32)
             return redirect(url_for("dashboard"))
         error = "Tên đăng nhập hoặc mật khẩu không đúng."
     return render_template("login.html", error=error)
@@ -91,8 +95,11 @@ def login():
 def dashboard():
     if not session.get("logged_in"):
         return redirect(url_for("login"))
+    if not session.get("clear_token"):
+        session["clear_token"] = secrets.token_urlsafe(32)
     return render_template(
-        "dashboard.html", username=username, syslog_host=os.environ.get("SYSLOG_HOST", "10.20.0.2")
+        "dashboard.html", username=username, syslog_host=os.environ.get("SYSLOG_HOST", "10.20.0.2"),
+        clear_token=session["clear_token"],
     )
 
 
@@ -117,6 +124,21 @@ def syslog_probe():
     except OSError as exc:
         app.logger.warning("Syslog probe unavailable: %s", exc)
         return jsonify(error="Unable to send Syslog probe"), 503
+
+
+@app.post("/api/syslog/clear")
+def syslog_clear():
+    if not session.get("logged_in"):
+        return jsonify(error="unauthorized"), 401
+    token = request.headers.get("X-CSRF-Token", "")
+    expected = session.get("clear_token", "")
+    if not token or not expected or not hmac.compare_digest(token, expected):
+        return jsonify(error="invalid CSRF token"), 403
+    try:
+        return jsonify(clear_syslog_data())
+    except OSError as exc:
+        app.logger.warning("Syslog cleanup failed: %s", exc)
+        return jsonify(error="Unable to clear Syslog data"), 503
 
 
 @app.post("/logout")

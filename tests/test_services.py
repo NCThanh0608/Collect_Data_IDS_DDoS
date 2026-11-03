@@ -1,5 +1,6 @@
 import io
 import json
+import logging
 import os
 import socket
 import sys
@@ -22,7 +23,8 @@ os.environ["EXPERIMENT_ID"] = "test-run"
 
 from network_config import addresses  # noqa: E402
 from victim_lab.http.app import access_logger, app  # noqa: E402
-from victim_lab.monitor.collect import sample  # noqa: E402
+from victim_lab.monitor.collect import UnlimitedRotatingFileHandler, sample  # noqa: E402
+from victim_lab.syslog.clear import clear_syslog_data  # noqa: E402
 from victim_lab.syslog.probe import send_probe  # noqa: E402
 from victim_lab.syslog.reader import (  # noqa: E402
     dashboard_status,
@@ -71,6 +73,50 @@ class HttpTests(unittest.TestCase):
 
 
 class SyslogDashboardTests(unittest.TestCase):
+    def test_clear_requires_login_and_csrf_and_clears_only_syslog_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            messages = root / "syslog.jsonl"
+            stats = root / "rsyslog-stats.log"
+            metrics = root / "metrics.jsonl"
+            messages.write_bytes(b"old messages")
+            stats.write_bytes(b"old stats")
+            (root / "syslog.jsonl.1").write_bytes(b"older messages")
+            (root / "syslog.jsonl.4").write_bytes(b"even older messages")
+            (root / "syslog.jsonl.20261103T081000Z.123.456").write_bytes(b"new rotation")
+            (root / "rsyslog-stats.log.1.gz").write_bytes(b"older stats")
+            (root / "rsyslog-stats.log.4.gz").write_bytes(b"more stats")
+            metrics.write_bytes(b"keep metrics")
+
+            with patch("victim_lab.http.app.clear_syslog_data", side_effect=lambda: clear_syslog_data(root)):
+                with app.test_client() as client:
+                    self.assertEqual(client.post("/api/syslog/clear").status_code, 401)
+                    client.post("/login", data={"username": "labuser", "password": "correct-password"})
+                    self.assertEqual(client.post("/api/syslog/clear").status_code, 403)
+                    with client.session_transaction() as session:
+                        token = session["clear_token"]
+                    self.assertEqual(client.post(
+                        "/api/syslog/clear", headers={"X-CSRF-Token": "wrong"}
+                    ).status_code, 403)
+                    self.assertEqual(messages.read_bytes(), b"old messages")
+                    response = client.post(
+                        "/api/syslog/clear", headers={"X-CSRF-Token": token}
+                    )
+                    self.assertEqual(response.status_code, 200)
+                    self.assertGreater(response.json["bytes_cleared"], 0)
+
+            self.assertEqual(messages.read_bytes(), b"")
+            self.assertEqual(stats.read_bytes(), b"")
+            self.assertFalse((root / "syslog.jsonl.1").exists())
+            self.assertFalse((root / "syslog.jsonl.4").exists())
+            self.assertFalse((root / "syslog.jsonl.20261103T081000Z.123.456").exists())
+            self.assertFalse((root / "rsyslog-stats.log.1.gz").exists())
+            self.assertFalse((root / "rsyslog-stats.log.4.gz").exists())
+            self.assertEqual(metrics.read_bytes(), b"keep metrics")
+            with messages.open("ab") as handle:
+                handle.write(b"new message")
+            self.assertEqual(messages.read_bytes(), b"new message")
+
     def test_status_and_probe_require_login(self):
         with app.test_client() as client:
             self.assertEqual(client.get("/api/syslog/status").status_code, 401)
@@ -89,6 +135,36 @@ class SyslogDashboardTests(unittest.TestCase):
 
 
 class SyslogReaderTests(unittest.TestCase):
+    def test_recent_messages_reads_newest_unlimited_archives(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            current = root / "syslog.jsonl"
+            old = root / "syslog.jsonl.1"
+            newest = root / "syslog.jsonl.20261103T081000Z.123.456"
+            for path, message in ((old, "old"), (newest, "newest")):
+                path.write_text(json.dumps({"message": message}) + "\n", encoding="utf-8")
+            os.utime(old, (1, 1))
+            os.utime(newest, (2, 2))
+            self.assertEqual(
+                [item["message"] for item in recent_messages(current, limit=2)],
+                ["newest", "old"],
+            )
+
+    def test_rate_uses_latest_metrics_archive_after_rotation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            current = root / "metrics.jsonl"
+            archive = root / "metrics.jsonl.20261103T081000000000Z.0123456789abcdef0123456789abcdef"
+            now = datetime.now(timezone.utc)
+            before = {"timestamp_utc": (now - timedelta(seconds=5)).isoformat(),
+                      "syslog": {"received_total": 10}, "udp": {"InErrors": 2}}
+            after = {"timestamp_utc": now.isoformat(),
+                     "syslog": {"received_total": 20}, "udp": {"InErrors": 4}}
+            archive.write_text(json.dumps(before) + "\n", encoding="utf-8")
+            current.write_text(json.dumps(after) + "\n", encoding="utf-8")
+            self.assertEqual(read_rate(current), 2.0)
+            self.assertEqual(read_kernel_udp_errors(current), 4)
+
     def test_stats_and_recent_messages_are_bounded(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -183,6 +259,26 @@ class SyslogReaderTests(unittest.TestCase):
 
 
 class MonitorTests(unittest.TestCase):
+    def test_metrics_rotation_keeps_more_than_three_archives(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "metrics.jsonl"
+            handler = UnlimitedRotatingFileHandler(path, maxBytes=40, encoding="utf-8")
+            try:
+                for number in range(12):
+                    handler.emit(logging.LogRecord(
+                        "test", logging.INFO, __file__, 0,
+                        f"record-{number:02d}-payload", (), None,
+                    ))
+            finally:
+                handler.close()
+            archives = list(path.parent.glob("metrics.jsonl.*"))
+            self.assertGreater(len(archives), 3)
+            all_text = path.read_text(encoding="utf-8") + "".join(
+                archive.read_text(encoding="utf-8") for archive in archives
+            )
+            for number in range(12):
+                self.assertEqual(all_text.count(f"record-{number:02d}-payload"), 1)
+
     def test_sample_includes_syslog_counters(self):
         with tempfile.TemporaryDirectory() as directory, \
              patch("victim_lab.monitor.collect.read_cpu_ticks", return_value=(120, 40)), \
